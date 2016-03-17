@@ -1988,6 +1988,42 @@ body.cms-dialog {
 }
 
 /** --------------------------------------------
+ * Add to campaign dialog
+ * -------------------------------------------- */
+
+.ui-dialog .ss-addtocampaign-dialog {
+	padding: 0;
+
+	.cms-content-header {
+		padding: 12px 16px;
+		width: 100%;
+		height: 52px;
+		margin: 0;
+		border: 0;
+		
+		h3 {
+			margin: 0;
+			line-height: 28px;
+		}
+	}
+	
+	.ss-addtocampaign-content {
+		padding: 12px 16px;
+		margin: 0;
+		border: 0;
+	}
+	
+	.Actions {
+		padding: 0 16px;
+	}
+	
+	.dropdown .chzn-container {
+		max-width: 100%;
+	}
+}
+
+
+/** --------------------------------------------
  * Search forms (used in AssetAdmin, ModelAdmin, etc)
  * -------------------------------------------- */
 .cms-search-form {

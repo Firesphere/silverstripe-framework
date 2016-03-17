@@ -29,5 +29,6 @@
 	</div>
 
 	$EditorToolbar
+	$AddToCampaignToolbar
 </body>
 </html>

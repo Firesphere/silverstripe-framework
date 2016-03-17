@@ -98,6 +98,7 @@ class LeftAndMain extends Controller implements PermissionProvider {
 		'printable',
 		'show',
 		'EditorToolbar',
+		'AddToCampaignToolbar',
 		'EditForm',
 		'AddForm',
 		'batchactions',
@@ -462,6 +463,7 @@ class LeftAndMain extends Controller implements PermissionProvider {
 				FRAMEWORK_DIR . '/javascript/dist/i18n.js',
 				FRAMEWORK_ADMIN_DIR . '/javascript/dist/sspath.js',
 				FRAMEWORK_ADMIN_DIR . '/javascript/dist/ssui.core.js',
+				FRAMEWORK_ADMIN_DIR . '/javascript/dist/AddToCampaignForm.js',
 			]
 		]);
 
@@ -1503,6 +1505,13 @@ class LeftAndMain extends Controller implements PermissionProvider {
 	 */
 	public function EditorToolbar() {
 		return HtmlEditorField_Toolbar::create($this, "EditorToolbar");
+	}
+	
+	/**
+	 * Return the AddToCampaign toolbar
+	 */
+	public function AddToCampaignToolbar() {
+		return AddToCampaign_Toolbar::create($this, "AddToCampaignToolbar");
 	}
 
 	/**
