@@ -20,4 +20,3 @@ require('../../../../javascript/src/HtmlEditorField.js');
 require('../../../../javascript/src/TabSet.js');
 require('../../src/ssui.core.js');
 require('../../../../javascript/src/GridField.js');
-require('json-js');
