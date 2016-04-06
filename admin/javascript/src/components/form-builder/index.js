@@ -135,6 +135,12 @@ export class FormBuilderComponent extends SilverStripeComponent {
       // which props are required.
       const props = deepFreeze(field);
 
+      // Provides container components a place to hook in
+      // and apply customisations to scaffolded components.
+      if (typeof this.props.createFn === 'function') {
+        return this.props.createFn(Component, props);
+      }
+
       return <Component key={i} {...props} />;
     });
   }
@@ -171,6 +177,7 @@ export class FormBuilderComponent extends SilverStripeComponent {
 
 FormBuilderComponent.propTypes = {
   actions: React.PropTypes.object.isRequired,
+  createFn: React.PropTypes.func,
   schemaUrl: React.PropTypes.string.isRequired,
   schemas: React.PropTypes.object.isRequired,
 };

@@ -33,11 +33,23 @@ class CampaignAdminContainer extends SilverStripeComponent {
             icon={'plus-circled'}
             handleClick={this.addCampaign}
           />
-          <FormBuilder schemaUrl={schemaUrl} />
+          <FormBuilder schemaUrl={schemaUrl} createFn={this.createFn} />
         </div>
         { previewUrl && <CampaignPreview previewUrl={previewUrl} /> }
       </div>
     );
+  }
+
+  /**
+   * Hook to allow customisation of components being constructed by FormBuilder.
+   *
+   * @param object Component - Component constructor.
+   * @param object props - Props passed from FormBuilder.
+   *
+   * @return object - Instanciated React component
+   */
+  createFn(Component, props) {
+    return <Component {...props} />;
   }
 
   addCampaign() {
