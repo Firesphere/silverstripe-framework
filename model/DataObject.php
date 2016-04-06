@@ -723,6 +723,31 @@ class DataObject extends ViewableData implements DataObjectInterface, i18nEntity
 	}
 
 	/**
+	 * Pluralise this item given a specific count.
+	 *
+	 * E.g. "0 Pages", "1 File", "3 Images"
+	 *
+	 * @param string $count
+	 * @return string
+	 */
+	public function i18n_pluralise($count) {
+		// @todo - support more than 2 forms
+		if((int)$count === 1) {
+			_t(
+				"DataObject.SINGULAR",
+				"1 {name}",
+				['name' => $this->i18n_singular_name()]
+			);
+		} else {
+			_t(
+				"DataObject.PLURAL",
+				"{count} {name}",
+				['count' => $count, 'name' => $this->i18n_plural_name()]
+			);
+		}
+	}
+
+	/**
 	 * Get the user friendly singular name of this DataObject.
 	 * If the name is not defined (by redefining $singular_name in the subclass),
 	 * this returns the class name.
