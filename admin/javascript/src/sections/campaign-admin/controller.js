@@ -5,6 +5,7 @@ import FormAction from 'components/form-action/index';
 import i18n from 'i18n';
 import NorthHeader from 'components/north-header/index';
 import FormBuilder from 'components/form-builder/index';
+import CampaignPreview from './preview';
 
 class CampaignAdminContainer extends SilverStripeComponent {
 
@@ -16,16 +17,25 @@ class CampaignAdminContainer extends SilverStripeComponent {
 
   render() {
     const schemaUrl = this.props.config.forms.editForm.schemaUrl;
+    const previewUrl = document.getElementsByTagName('base')[0].href;
+
+    // Trigger different layout when preview is enabled
+    const classNames = previewUrl
+      ? 'cms-middle with-preview'
+      : 'cms-middle no-preview';
 
     return (
-      <div>
-        <NorthHeader />
-        <FormAction
-          label={i18n._t('Campaigns.ADDCAMPAIGN')}
-          icon={'plus-circled'}
-          handleClick={this.addCampaign}
-        />
-        <FormBuilder schemaUrl={schemaUrl} />
+      <div className={classNames}>
+        <div className="cms-campaigns collapse in" aria-expanded="true">
+          <NorthHeader />
+          <FormAction
+            label={i18n._t('Campaigns.ADDCAMPAIGN')}
+            icon={'plus-circled'}
+            handleClick={this.addCampaign}
+          />
+          <FormBuilder schemaUrl={schemaUrl} />
+        </div>
+        { previewUrl && <CampaignPreview previewUrl={previewUrl} /> }
       </div>
     );
   }
