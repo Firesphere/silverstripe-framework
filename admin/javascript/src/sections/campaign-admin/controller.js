@@ -9,6 +9,7 @@ import CampaignPreview from './preview';
 import Accordion from 'components/accordion/index';
 import AccordionGroup from 'components/accordion/group';
 import AccordionItem from 'components/accordion/item';
+import ChangeSetItem from './item';
 
 class CampaignAdminContainer extends SilverStripeComponent {
 
@@ -75,16 +76,15 @@ class CampaignAdminContainer extends SilverStripeComponent {
     Object.keys(itemGroups).forEach(className => {
       let group = itemGroups[className],
         accordionItems = [],
-        title = group.items.length === 1 ? group.singular : group.plural,
+        groupCount = group.items.length,
+        title = groupCount + ' ' +  (groupCount === 1 ? group.singular : group.plural),
         id = 'Set_' + setID + '_Group_' + className;
 
       // Create items for this group
       group.items.forEach(item => {
         accordionItems.push(
           <AccordionItem key={item.ID}>
-              <h6 className="list-group-item-heading">{item.Title}</h6>
-              <span className="btnbtn-link pull-xs-right">[lk] 3 links</span>
-              <span className="label label-warning ">Modified</span>
+            <ChangeSetItem item={item} />
           </AccordionItem>
         );
       });
@@ -145,12 +145,11 @@ class CampaignAdminContainer extends SilverStripeComponent {
     // group by whatever
     items.forEach(item => {
       // Create new group if needed
-      let classname = item['ObjectClass'];
+      let classname = item['BaseClass'];
       if (!groups[classname]) {
         groups[classname] = {
-          classname: classname,
-          singular: item['ObjectSingular'],
-          plural: item['ObjectPlural'],
+          singular: item['Singular'],
+          plural: item['Plural'],
           items: []
         };
       }
@@ -171,78 +170,84 @@ class CampaignAdminContainer extends SilverStripeComponent {
   itemsForSet(setid) {
     // hard coded json
     return [{
-      "_links": {"self": {"href": "admin\/campaigns\/item\/1"}},
-      "ID": 1,
-      "Created": "2016-03-29 18:08:18",
-      "LastEdited": "2016-03-29 18:20:51",
-      "Title": "#1",
-      "ChangeType": "none",
-      "Added": "explicitly",
-      "ObjectClass": "Page",
-      "ObjectID": 1,
-      "ObjectSingular": "Page",
-      "ObjectPlural": "Pages"
-    }, {
-      "_links": {"self": {"href": "admin\/campaigns\/item\/2"}},
-      "ID": 2,
-      "Created": "2016-03-29 18:08:18",
-      "LastEdited": "2016-03-29 18:20:51",
-      "Title": "#2",
-      "ChangeType": "modified",
-      "Added": "explicitly",
-      "ObjectClass": "Page",
-      "ObjectID": 2,
-      "ObjectSingular": "Page",
-      "ObjectPlural": "Pages"
-    }, {
-      "_links": {"self": {"href": "admin\/campaigns\/item\/3"}},
-      "ID": 3,
-      "Created": "2016-03-29 18:08:18",
-      "LastEdited": "2016-03-29 18:20:51",
-      "Title": "#3",
-      "ChangeType": "modified",
-      "Added": "explicitly",
-      "ObjectClass": "Page",
-      "ObjectID": 3,
-      "ObjectSingular": "Page",
-      "ObjectPlural": "Pages"
-    }, {
-      "_links": {"self": {"href": "admin\/campaigns\/item\/4"}},
-      "ID": 4,
-      "Created": "2016-03-29 18:08:18",
-      "LastEdited": "2016-03-29 18:20:51",
-      "Title": "#4",
-      "ChangeType": "modified",
-      "Added": "explicitly",
-      "ObjectClass": "ErrorPage",
-      "ObjectID": 4,
-      "ObjectSingular": "Error Page",
-      "ObjectPlural": "Error Pages"
-    }, {
-      "_links": {"self": {"href": "admin\/campaigns\/item\/5"}},
-      "ID": 5,
-      "Created": "2016-03-29 18:08:18",
-      "LastEdited": "2016-03-29 18:20:51",
-      "Title": "#5",
-      "ChangeType": "none",
-      "Added": "explicitly",
-      "ObjectClass": "ErrorPage",
-      "ObjectID": 5,
-      "ObjectSingular": "Error Page",
-      "ObjectPlural": "Error Pages"
-    }, {
-      "_links": {"self": {"href": "admin\/campaigns\/item\/7"}},
-      "ID": 7,
-      "Created": "2016-03-29 18:20:51",
-      "LastEdited": "2016-03-29 18:20:51",
-      "Title": "#7",
-      "ChangeType": "created",
-      "Added": "implicitly",
-      "ObjectClass": "Image",
-      "ObjectID": 2,
-      "ObjectSingular": "File",
-      "ObjectPlural": "Files"
-    }];
+					"_links": {"self": {"href": "admin\/campaigns\/item\/1"}},
+					"ID": 1,
+					"Created": "2016-03-29 18:08:18",
+					"LastEdited": "2016-03-29 18:20:51",
+					"Title": "Home",
+					"ChangeType": "none",
+					"Added": "explicitly",
+					"ObjectClass": "Page",
+					"ObjectID": 1,
+					"BaseClass": "SiteTree",
+					"Singular": "Page",
+					"Plural": "Pages"
+				}, {
+					"_links": {"self": {"href": "admin\/campaigns\/item\/2"}},
+					"ID": 2,
+					"Created": "2016-03-29 18:08:18",
+					"LastEdited": "2016-03-29 18:20:51",
+					"Title": "About Us",
+					"ChangeType": "modified",
+					"Added": "explicitly",
+					"ObjectClass": "Page",
+					"ObjectID": 2,
+					"BaseClass": "SiteTree",
+					"Singular": "Page",
+					"Plural": "Pages"
+				}, {
+					"_links": {"self": {"href": "admin\/campaigns\/item\/3"}},
+					"ID": 3,
+					"Created": "2016-03-29 18:08:18",
+					"LastEdited": "2016-03-29 18:20:51",
+					"Title": "Contact Us",
+					"ChangeType": "modified",
+					"Added": "explicitly",
+					"ObjectClass": "Page",
+					"ObjectID": 3,
+					"BaseClass": "SiteTree",
+					"Singular": "Page",
+					"Plural": "Pages"
+				}, {
+					"_links": {"self": {"href": "admin\/campaigns\/item\/4"}},
+					"ID": 4,
+					"Created": "2016-03-29 18:08:18",
+					"LastEdited": "2016-03-29 18:20:51",
+					"Title": "Page not found",
+					"ChangeType": "modified",
+					"Added": "explicitly",
+					"ObjectClass": "ErrorPage",
+					"ObjectID": 4,
+					"BaseClass": "SiteTree",
+					"Singular": "Page",
+					"Plural": "Pages"
+				}, {
+					"_links": {"self": {"href": "admin\/campaigns\/item\/5"}},
+					"ID": 5,
+					"Created": "2016-03-29 18:08:18",
+					"LastEdited": "2016-03-29 18:20:51",
+					"Title": "Server error",
+					"ChangeType": "none",
+					"Added": "explicitly",
+					"ObjectClass": "ErrorPage",
+					"ObjectID": 5,
+					"BaseClass": "SiteTree",
+					"Singular": "Page",
+					"Plural": "Pages"
+				}, {
+					"_links": {"self": {"href": "admin\/campaigns\/item\/7"}},
+					"ID": 7,
+					"Created": "2016-03-29 18:20:51",
+					"LastEdited": "2016-03-29 18:20:51",
+					"Title": "Fireworks",
+					"ChangeType": "created",
+					"Added": "implicitly",
+					"ObjectClass": "Image",
+					"ObjectID": 2,
+					"BaseClass": "File",
+					"Singular": "File",
+					"Plural": "Files"
+				}];
   }
 
   addCampaign() {

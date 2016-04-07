@@ -62,6 +62,15 @@ class ChangeSetItem extends DataObject {
 		)
 	);
 
+	public function getTitle() {
+		// Get title of modified object
+		$object = Versioned::get_latest_version($this->ObjectClass, $this->ObjectID);
+		if($object) {
+			return $object->getTitle();
+		}
+		return $this->i18n_singular_name() . ' #' . $this->ID;
+	}
+
 	/**
 	 * Get the type of change: none, created, deleted, modified, manymany
 	 *
