@@ -27,7 +27,7 @@ class CampaignAdmin extends LeftAndMain implements PermissionProvider {
 	private static $url_handlers = [
 		'GET sets' => 'readCampaigns',
 		'POST set/$ID' => 'createCampaign',
-		'GET set/$ID' => 'readCampaign',
+		'GET set/$ID/$Name' => 'readCampaign',
 		'PUT set/$ID' => 'updateCampaign',
 		'DELETE set/$ID' => 'deleteCampaign',
 	];
@@ -41,7 +41,9 @@ class CampaignAdmin extends LeftAndMain implements PermissionProvider {
 				'editForm' => [
 					'schemaUrl' => $this->Link('schema/EditForm')
 				]
-			]
+			],
+			'itemListViewLink' => Config::inst()->get($this->class, 'url_segment') . '/set/:id/show',
+			'itemListViewEndpoint' => Config::inst()->get($this->class, 'url_segment') . '/set/:id/show',
 		]);
 	}
 
@@ -322,12 +324,27 @@ JSON;
 	 */
 	public function readCampaign(SS_HTTPRequest $request) {
 		$response = new SS_HTTPResponse();
+		
+		if ($request->getHeader('Accept') == 'text/json') {
 		$response->addHeader('Content-Type', 'application/json');
-		$response->setBody('');
+			$changeSet = ChangeSet::get()->byId($request->param('ID'));
 
-		// TODO Implement data retrieval and serialisation
+			switch ($request->param('Name')) {
+				case "edit":
+					$response->setBody('{"message":"show the edit view"}');
+					break;
+				case "show":
+					$response->setBody(Convert::raw2json($this->getChangeSetResource($changeSet)));
+					break;
+				default:
+					$response->setBody('{"message":"404"}');
+			}
 
 		return $response;
+
+		} else {
+			return $this->index($request);
+		}
 	}
 
 	/**

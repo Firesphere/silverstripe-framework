@@ -19,26 +19,34 @@ class CampaignAdminContainer extends SilverStripeComponent {
     this.addCampaign = this.addCampaign.bind(this);
   }
 
-  render() {
-    // <Hard coding>
-    const mode = 'items'; // change to sets (lists campaigns), or items (items in campaign)
-    const setID = 1;
-    // </Hard coding>
+  componentDidMount() {
+    window.ss.router(`/${this.props.config.itemListViewLink}`, () => {
+      this.forceUpdate();
+    });
+  }
 
-    switch (mode) {
-      case 'sets':
-        return this.renderSets();
-      case 'items':
-        return this.renderItems(setID);
+  render() {
+    const isListRoute = window
+      .ss
+      .router
+      .routeAppliesToCurrentLocation(`/${this.props.config.itemListViewLink}`);
+
+    if (isListRoute) {
+      const setID = 1;
+      return this.renderItemListView(setID);
     }
+
+    return this.renderIndexView();
   }
 
   /**
-   * Renders list of sets
-   * @returns {XML}
+   * Renders the default view which displays a list of Campaigns.
+   *
+   * @return object
    */
-  renderSets() {
+  renderIndexView() {
     const schemaUrl = this.props.config.forms.editForm.schemaUrl;
+
     return (
       <div className="cms-middle no-preview">
         <div className="cms-campaigns collapse in" aria-expanded="true">
@@ -48,43 +56,44 @@ class CampaignAdminContainer extends SilverStripeComponent {
             icon={'plus-circled'}
             handleClick={this.addCampaign}
           />
-          <FormBuilder schemaUrl={schemaUrl} createFn={this.createFn}/>
+          <FormBuilder schemaUrl={schemaUrl} createFn={this.createFn} />
         </div>
       </div>
     );
   }
 
   /**
-   * Renders items view for a set
+   * Renders a list of items in a Campaign.
    *
-   * @param setID
+   * @param string setID - ID of the Campaign to display items for.
+   *
+   * @return object
    */
-  renderItems(setID) {
-    // <Hard coding>
+  renderItemListView(setID) {
     const itemID = 1;
-    // </Hard coding>
-
 
     // Trigger different layout when preview is enabled
-    const
-      previewUrl = this.previewURLForItem(itemID),
-      itemGroups = this.groupItemsForSet(setID),
-      classNames = previewUrl ? 'cms-middle with-preview' : 'cms-middle no-preview';
+    const previewUrl = this.previewURLForItem(itemID);
+    const itemGroups = this.groupItemsForSet(setID);
+    const classNames = previewUrl ? 'cms-middle with-preview' : 'cms-middle no-preview';
 
     // Get items in this set
     let accordionGroups = [];
+
     Object.keys(itemGroups).forEach(className => {
-      let group = itemGroups[className],
-        accordionItems = [],
-        groupCount = group.items.length,
-        title = groupCount + ' ' +  (groupCount === 1 ? group.singular : group.plural),
-        groupid = 'Set_' + setID + '_Group_' + className;
+      const group = itemGroups[className];
+      const groupCount = group.items.length;
+
+      let accordionItems = [];
+      let title = `${groupCount} ${groupCount === 1 ? group.singular : group.plural}`;
+      let groupid = `Set_${setID}_Group_${className}`;
 
       // Create items for this group
       group.items.forEach(item => {
         // Add extra css class for published items
         let itemClassName = '';
-        if(item.ChangeType === 'none') {
+
+        if (item.ChangeType === 'none') {
           itemClassName = 'list-group-item--published';
         }
 
@@ -96,7 +105,11 @@ class CampaignAdminContainer extends SilverStripeComponent {
       });
 
       // Merge into group
-      accordionGroups.push(<AccordionGroup key={groupid} groupid={groupid} title={title}>{accordionItems}</AccordionGroup>);
+      accordionGroups.push(
+        <AccordionGroup key={groupid} groupid={groupid} title={title}>
+          {accordionItems}
+        </AccordionGroup>
+      );
     });
 
     return (
@@ -109,7 +122,7 @@ class CampaignAdminContainer extends SilverStripeComponent {
             </Accordion>
           </div>
         </div>
-        { previewUrl && <CampaignPreview previewUrl={previewUrl}/> }
+        { previewUrl && <CampaignPreview previewUrl={previewUrl} /> }
       </div>
     );
   }
@@ -143,27 +156,29 @@ class CampaignAdminContainer extends SilverStripeComponent {
   /**
    * Group items for changeset display
    *
-   * @param setid
-   * @return Array
+   * @param string setid
+   *
+   * @return array
    */
   groupItemsForSet(setid) {
-    let groups = {},
-      items = this.itemsForSet(setid);
+    const groups = {};
+    const items = this.itemsForSet(setid);
 
     // group by whatever
     items.forEach(item => {
       // Create new group if needed
-      let classname = item['BaseClass'];
+      const classname = item.BaseClass;
+
       if (!groups[classname]) {
         groups[classname] = {
-          singular: item['Singular'],
-          plural: item['Plural'],
-          items: []
+          singular: item.Singular,
+          plural: item.Plural,
+          items: [],
         };
       }
 
       // Push items
-      groups[classname]['items'].push(item);
+      groups[classname].items.push(item);
     });
 
     return groups;
@@ -172,90 +187,119 @@ class CampaignAdminContainer extends SilverStripeComponent {
   /**
    * List of items for a set
    *
-   * @param setid
-   * @return Array
+   * @return array
    */
-  itemsForSet(setid) {
+  itemsForSet() {
     // hard coded json
-    return [{
-					"_links": {"self": {"href": "admin\/campaigns\/item\/1"}},
-					"ID": 1,
-					"Created": "2016-03-29 18:08:18",
-					"LastEdited": "2016-03-29 18:20:51",
-					"Title": "Home",
-					"ChangeType": "none",
-					"Added": "explicitly",
-					"ObjectClass": "Page",
-					"ObjectID": 1,
-					"BaseClass": "SiteTree",
-					"Singular": "Page",
-					"Plural": "Pages"
-				}, {
-					"_links": {"self": {"href": "admin\/campaigns\/item\/2"}},
-					"ID": 2,
-					"Created": "2016-03-29 18:08:18",
-					"LastEdited": "2016-03-29 18:20:51",
-					"Title": "About Us",
-					"ChangeType": "modified",
-					"Added": "explicitly",
-					"ObjectClass": "Page",
-					"ObjectID": 2,
-					"BaseClass": "SiteTree",
-					"Singular": "Page",
-					"Plural": "Pages"
-				}, {
-					"_links": {"self": {"href": "admin\/campaigns\/item\/3"}},
-					"ID": 3,
-					"Created": "2016-03-29 18:08:18",
-					"LastEdited": "2016-03-29 18:20:51",
-					"Title": "Contact Us",
-					"ChangeType": "modified",
-					"Added": "explicitly",
-					"ObjectClass": "Page",
-					"ObjectID": 3,
-					"BaseClass": "SiteTree",
-					"Singular": "Page",
-					"Plural": "Pages"
-				}, {
-					"_links": {"self": {"href": "admin\/campaigns\/item\/4"}},
-					"ID": 4,
-					"Created": "2016-03-29 18:08:18",
-					"LastEdited": "2016-03-29 18:20:51",
-					"Title": "Page not found",
-					"ChangeType": "modified",
-					"Added": "explicitly",
-					"ObjectClass": "ErrorPage",
-					"ObjectID": 4,
-					"BaseClass": "SiteTree",
-					"Singular": "Page",
-					"Plural": "Pages"
-				}, {
-					"_links": {"self": {"href": "admin\/campaigns\/item\/5"}},
-					"ID": 5,
-					"Created": "2016-03-29 18:08:18",
-					"LastEdited": "2016-03-29 18:20:51",
-					"Title": "Server error",
-					"ChangeType": "none",
-					"Added": "explicitly",
-					"ObjectClass": "ErrorPage",
-					"ObjectID": 5,
-					"BaseClass": "SiteTree",
-					"Singular": "Page",
-					"Plural": "Pages"
-				}, {
-					"_links": {"self": {"href": "admin\/campaigns\/item\/7"}},
-					"ID": 7,
-					"Created": "2016-03-29 18:20:51",
-					"LastEdited": "2016-03-29 18:20:51",
-					"Title": "Fireworks",
-					"ChangeType": "created",
-					"Added": "implicitly",
-					"ObjectClass": "Image",
-					"ObjectID": 2,
-					"BaseClass": "File",
-					"Singular": "File",
-					"Plural": "Files"
-				}];
+    return [
+      {
+        _links: {
+          self: {
+            href: 'admin\/campaigns\/item\/1',
+          },
+        },
+        ID: 1,
+        Created: '2016-03-29 18:08:18',
+        LastEdited: '2016-03-29 18:20:51',
+        Title: 'Home',
+        ChangeType: 'none',
+        Added: 'explicitly',
+        ObjectClass: 'Page',
+        ObjectID: 1,
+        BaseClass: 'SiteTree',
+        Singular: 'Page',
+        Plural: 'Pages',
+      },
+      {
+        _links: {
+          self: {
+            href: 'admin\/campaigns\/item\/2',
+          },
+        },
+        ID: 2,
+        Created: '2016-03-29 18:08:18',
+        LastEdited: '2016-03-29 18:20:51',
+        Title: 'About Us',
+        ChangeType: 'modified',
+        Added: 'explicitly',
+        ObjectClass: 'Page',
+        ObjectID: 2,
+        BaseClass: 'SiteTree',
+        Singular: 'Page',
+        Plural: 'Pages',
+      },
+      {
+        _links: {
+          self: {
+            href: 'admin\/campaigns\/item\/3',
+          },
+        },
+        ID: 3,
+        Created: '2016-03-29 18:08:18',
+        LastEdited: '2016-03-29 18:20:51',
+        Title: 'Contact Us',
+        ChangeType: 'modified',
+        Added: 'explicitly',
+        ObjectClass: 'Page',
+        ObjectID: 3,
+        BaseClass: 'SiteTree',
+        Singular: 'Page',
+        Plural: 'Pages',
+      },
+      {
+        _links: {
+          self: {
+            href: 'admin\/campaigns\/item\/4',
+          },
+        },
+        ID: 4,
+        Created: '2016-03-29 18:08:18',
+        LastEdited: '2016-03-29 18:20:51',
+        Title: 'Page not found',
+        ChangeType: 'modified',
+        Added: 'explicitly',
+        ObjectClass: 'ErrorPage',
+        ObjectID: 4,
+        BaseClass: 'SiteTree',
+        Singular: 'Page',
+        Plural: 'Pages',
+      },
+      {
+        _links: {
+          self: {
+            href: 'admin\/campaigns\/item\/5',
+          },
+        },
+        ID: 5,
+        Created: '2016-03-29 18:08:18',
+        LastEdited: '2016-03-29 18:20:51',
+        Title: 'Server error',
+        ChangeType: 'none',
+        Added: 'explicitly',
+        ObjectClass: 'ErrorPage',
+        ObjectID: 5,
+        BaseClass: 'SiteTree',
+        Singular: 'Page',
+        Plural: 'Pages',
+      }, {
+        _links: {
+          self: {
+            href: 'admin\/campaigns\/item\/7',
+          },
+        },
+        ID: 7,
+        Created: '2016-03-29 18:20:51',
+        LastEdited: '2016-03-29 18:20:51',
+        Title: 'Fireworks',
+        ChangeType: 'created',
+        Added: 'implicitly',
+        ObjectClass: 'Image',
+        ObjectID: 2,
+        BaseClass: 'File',
+        Singular: 'File',
+        Plural: 'Files',
+      },
+    ];
   }
 
   addCampaign() {
