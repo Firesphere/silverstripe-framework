@@ -312,6 +312,15 @@
 					border-top: none;
 				}
 
+				.item__thumbnail {
+					width: 64px;
+					height: 64px;
+					display: block;
+					background: #ccc;
+					float: left;
+					margin: -0.75rem 12px -0.75rem -0.9375rem;
+				}
+
 				.label {
 					text-transform: uppercase;
 					font-size: 10px;
@@ -381,16 +390,7 @@
 		}
 	}
 
-	.item__thumbnail {
-		width: 64px;
-		height: 64px;
-		margin-left: -0.9375rem;
-		display: block;
-		background: #ccc;
-		margin-right: 12px;
-		float: left;
-		margin-top: -12px;
-	}
+
 	//
 	//.popover-content a {
 	//  display: inline-block;

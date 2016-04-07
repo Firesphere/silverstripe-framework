@@ -34,6 +34,22 @@ class CampaignAdmin extends LeftAndMain implements PermissionProvider {
 
 	private static $url_segment = 'campaigns';
 
+	/**
+	 * Size of thumbnail width
+	 *
+	 * @config
+	 * @var int
+	 */
+	private static $thumbnail_width = 64;
+
+	/**
+	 * Size of thumbnail height
+	 *
+	 * @config
+	 * @var int
+	 */
+	private static $thumbnail_height = 64;
+
 	public function getClientConfig() {
 		return array_merge(parent::getClientConfig(), [
 			'forms' => [
@@ -193,7 +209,7 @@ JSON;
 		$hal = $this->getListResource();
 		$response->setBody(Convert::array2json($hal));
 		return $response;
-		}
+	}
 
 	/**
 	 * Get list contained as a hal wrapper
@@ -263,6 +279,8 @@ JSON;
 	protected function getChangeSetItemResource(ChangeSetItem $changeSetItem) {
 		$baseClass = ClassInfo::baseDataClass($changeSetItem->ObjectClass);
 		$baseSingleton = DataObject::singleton($baseClass);
+		$thumbnailWidth = (int)$this->config()->thumbnail_width;
+		$thumbnailHeight = (int)$this->config()->thumbnail_height;
 		$hal = [
 			'_links' => [
 				'self' => [
@@ -280,6 +298,7 @@ JSON;
 			'BaseClass' => $baseClass,
 			'Singular' => $baseSingleton->i18n_singular_name(),
 			'Plural' => $baseSingleton->i18n_plural_name(),
+			'Thumbnail' => $changeSetItem->ThumbnailURL($thumbnailWidth, $thumbnailHeight),
 		];
 		// Depending on whether the object was added implicitly or explicitly, set
 		// other related objects.

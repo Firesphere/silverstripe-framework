@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import SilverStripeComponent from 'silverstripe-component';
 
 /**
@@ -7,8 +6,9 @@ import SilverStripeComponent from 'silverstripe-component';
  */
 class ChangeSetItem extends SilverStripeComponent {
   render() {
-    let badge, links,
-      item = this.props.item;
+    let thumbnail = '';
+    let badge = '';
+    const item = this.props.item;
 
     // change badge
     switch (item.ChangeType) {
@@ -22,15 +22,23 @@ class ChangeSetItem extends SilverStripeComponent {
         badge = <span className="label label-error">Removed</span>;
         break;
       case 'none':
+      default:
         badge = <span className="label label-success item_visible-hovered">Already published</span>;
         break;
     }
 
     // Linked items
-    links = <span className="btnbtn-link pull-xs-right">[lk] 3 links</span>;
+    let links = <span className="btnbtn-link pull-xs-right">[lk] 3 links</span>;
+
+    // Thumbnail
+    if (item.Thumbnail) {
+      thumbnail = <span className="item__thumbnail"><img src={item.Thumbnail} /></span>;
+    }
+
 
     return (
       <div>
+        {thumbnail}
         <h6 className="list-group-item-heading">{item.Title}</h6>
         {links}
         {badge}

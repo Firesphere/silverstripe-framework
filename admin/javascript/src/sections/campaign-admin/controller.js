@@ -32,12 +32,12 @@ class CampaignAdminContainer extends SilverStripeComponent {
       .routeAppliesToCurrentLocation(`/${this.props.config.itemListViewLink}`);
 
     if (isListRoute) {
-      const setID = 1;
+    const setID = 1;
       return this.renderItemListView(setID);
     }
 
     return this.renderIndexView();
-  }
+    }
 
   /**
    * Renders the default view which displays a list of Campaigns.
@@ -56,7 +56,7 @@ class CampaignAdminContainer extends SilverStripeComponent {
             icon={'plus-circled'}
             handleClick={this.addCampaign}
           />
-          <FormBuilder schemaUrl={schemaUrl} createFn={this.createFn} />
+          <FormBuilder schemaUrl={schemaUrl} createFn={this.createFn}/>
         </div>
       </div>
     );
@@ -93,7 +93,7 @@ class CampaignAdminContainer extends SilverStripeComponent {
         // Add extra css class for published items
         let itemClassName = '';
 
-        if (item.ChangeType === 'none') {
+        if(item.ChangeType === 'none') {
           itemClassName = 'list-group-item--published';
         }
 
@@ -122,7 +122,7 @@ class CampaignAdminContainer extends SilverStripeComponent {
             </Accordion>
           </div>
         </div>
-        { previewUrl && <CampaignPreview previewUrl={previewUrl} /> }
+        { previewUrl && <CampaignPreview previewUrl={previewUrl}/> }
       </div>
     );
   }
@@ -193,112 +193,59 @@ class CampaignAdminContainer extends SilverStripeComponent {
     // hard coded json
     return [
       {
-        _links: {
-          self: {
-            href: 'admin\/campaigns\/item\/1',
+        "_links": {
+          "self": {
+            "href": "admin\/campaigns\/item\/1"
+          }
           },
+        "Plural": "Pages",
+        "Thumbnail": null
         },
-        ID: 1,
-        Created: '2016-03-29 18:08:18',
-        LastEdited: '2016-03-29 18:20:51',
-        Title: 'Home',
-        ChangeType: 'none',
-        Added: 'explicitly',
-        ObjectClass: 'Page',
-        ObjectID: 1,
-        BaseClass: 'SiteTree',
-        Singular: 'Page',
-        Plural: 'Pages',
+      {
+        "_links": {
+          "self": {
+            "href": "admin\/campaigns\/item\/2"
+          }
+          },
+        "Plural": "Pages",
+        "Thumbnail": null
       },
       {
-        _links: {
-          self: {
-            href: 'admin\/campaigns\/item\/2',
-          },
+        "_links": {
+          "self": {
+            "href": "admin\/campaigns\/item\/3"
+          }
         },
-        ID: 2,
-        Created: '2016-03-29 18:08:18',
-        LastEdited: '2016-03-29 18:20:51',
-        Title: 'About Us',
-        ChangeType: 'modified',
-        Added: 'explicitly',
-        ObjectClass: 'Page',
-        ObjectID: 2,
-        BaseClass: 'SiteTree',
-        Singular: 'Page',
-        Plural: 'Pages',
+        "Plural": "Pages",
+        "Thumbnail": null
       },
       {
-        _links: {
-          self: {
-            href: 'admin\/campaigns\/item\/3',
-          },
+        "_links": {
+          "self": {
+            "href": "admin\/campaigns\/item\/4"
+          }
         },
-        ID: 3,
-        Created: '2016-03-29 18:08:18',
-        LastEdited: '2016-03-29 18:20:51',
-        Title: 'Contact Us',
-        ChangeType: 'modified',
-        Added: 'explicitly',
-        ObjectClass: 'Page',
-        ObjectID: 3,
-        BaseClass: 'SiteTree',
-        Singular: 'Page',
-        Plural: 'Pages',
+        "Plural": "Pages",
+        "Thumbnail": null
       },
       {
-        _links: {
-          self: {
-            href: 'admin\/campaigns\/item\/4',
-          },
+        "_links": {
+          "self": {
+            "href": "admin\/campaigns\/item\/5"
+          }
         },
-        ID: 4,
-        Created: '2016-03-29 18:08:18',
-        LastEdited: '2016-03-29 18:20:51',
-        Title: 'Page not found',
-        ChangeType: 'modified',
-        Added: 'explicitly',
-        ObjectClass: 'ErrorPage',
-        ObjectID: 4,
-        BaseClass: 'SiteTree',
-        Singular: 'Page',
-        Plural: 'Pages',
+        "Plural": "Pages",
+        "Thumbnail": null
       },
       {
-        _links: {
-          self: {
-            href: 'admin\/campaigns\/item\/5',
+        "_links": {
+          "self": {
+            "href": "admin\/campaigns\/item\/7"
+          }
           },
-        },
-        ID: 5,
-        Created: '2016-03-29 18:08:18',
-        LastEdited: '2016-03-29 18:20:51',
-        Title: 'Server error',
-        ChangeType: 'none',
-        Added: 'explicitly',
-        ObjectClass: 'ErrorPage',
-        ObjectID: 5,
-        BaseClass: 'SiteTree',
-        Singular: 'Page',
-        Plural: 'Pages',
-      }, {
-        _links: {
-          self: {
-            href: 'admin\/campaigns\/item\/7',
-          },
-        },
-        ID: 7,
-        Created: '2016-03-29 18:20:51',
-        LastEdited: '2016-03-29 18:20:51',
-        Title: 'Fireworks',
-        ChangeType: 'created',
-        Added: 'implicitly',
-        ObjectClass: 'Image',
-        ObjectID: 2,
-        BaseClass: 'File',
-        Singular: 'File',
-        Plural: 'Files',
-      },
+        "Plural": "Files",
+        "Thumbnail": "\/assets\/Uploads\/7e2bc8d2e1\/Fireworks__PadWzY0LDY0LCJGRkZGRkYiXQ.jpg"
+      }
     ];
   }
 
