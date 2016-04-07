@@ -1,18 +1,14 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import SilverStripeComponent from 'silverstripe-component';
+import Collapse from 'bootstrap-collapse';
 
 class AccordionGroup extends SilverStripeComponent {
   render() {
     let
       headerID = this.props.groupid + '_Header',
       listID = this.props.groupid + '_Items',
-      href = window.location.href;
-    if(window.location.hash) {
-      href = href.replace(window.location.hash, '#' + headerID);
-    } else {
-      href = href + '#' + headerID;
-    }
+      href = '#' + listID;
 
     return (
       <div className="accordion-group">
@@ -21,7 +17,7 @@ class AccordionGroup extends SilverStripeComponent {
             {this.props.title}
           </a>
         </h6>
-        <div id={listID} className="list-group list-group-flush collapse in" role="tabpanel" aria-labelledby={headerID}>
+        <div id={listID} aria-expanded="true" className="list-group list-group-flush collapse in" role="tabpanel" aria-labelledby={headerID}>
           {this.props.children}
         </div>
       </div>
