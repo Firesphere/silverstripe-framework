@@ -66,6 +66,7 @@ export class FormBuilderComponent extends SilverStripeComponent {
 
     this.formSchemaPromise = null;
     this.state = { isFetching: false };
+	this.mapFieldsToComponents = this.mapFieldsToComponents.bind(this);
   }
 
   componentDidMount() {
@@ -121,6 +122,7 @@ export class FormBuilderComponent extends SilverStripeComponent {
    * @return array
    */
   mapFieldsToComponents(fields) {
+    let createFn = this.props.createFn;
     return fields.map((field, i) => {
       const Component = field.component !== null
         ? fakeInjector.getComponentByName(field.component)
@@ -137,8 +139,8 @@ export class FormBuilderComponent extends SilverStripeComponent {
 
       // Provides container components a place to hook in
       // and apply customisations to scaffolded components.
-      if (typeof this.props.createFn === 'function') {
-        return this.props.createFn(Component, props);
+      if (typeof createFn === 'function') {
+        return createFn(Component, props);
       }
 
       return <Component key={i} {...props} />;
