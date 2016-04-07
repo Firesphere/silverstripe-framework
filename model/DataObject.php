@@ -728,23 +728,16 @@ class DataObject extends ViewableData implements DataObjectInterface, i18nEntity
 	 * E.g. "0 Pages", "1 File", "3 Images"
 	 *
 	 * @param string $count
+	 * @param bool $prependNumber Include number in result. Defaults to true.
 	 * @return string
 	 */
-	public function i18n_pluralise($count) {
-		// @todo - support more than 2 forms
-		if((int)$count === 1) {
-			_t(
-				"DataObject.SINGULAR",
-				"1 {name}",
-				['name' => $this->i18n_singular_name()]
-			);
-		} else {
-			_t(
-				"DataObject.PLURAL",
-				"{count} {name}",
-				['count' => $count, 'name' => $this->i18n_plural_name()]
-			);
-		}
+	public function i18n_pluralise($count, $prependNumber = true) {
+		return i18n::pluralise(
+			$this->i18n_singular_name(),
+			$this->i18n_plural_name(),
+			$count,
+			$prependNumber
+		);
 	}
 
 	/**

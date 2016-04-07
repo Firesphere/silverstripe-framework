@@ -400,23 +400,19 @@ class ChangeSet extends DataObject {
 		}
 
 		// Describe non-important items
-		switch($countedOther) {
-			case 0:
-				break;
-			case 1: {
-				if ($counted) {
-					$parts[] = _t('ChangeSet.DESCRIPTION_OTHER_ITEM', '1 other item');
-				} else {
-					$parts[] = _t('ChangeSet.DESCRIPTION_ITEM', '1 item');
-				}
-				break;
-			}
-			default: {
-				if ($counted) {
-					$parts[] = _t('ChangeSet.DESCRIPTION_OTHER_ITEMS', '{count} other items', ['count' => $countedOther]);
-				} else {
-					$parts[] = _t('ChangeSet.DESCRIPTION_ITEMS', '{count} items', ['count' => $countedOther]);
-				}
+		if($countedOther) {
+			if ($counted) {
+				$parts[] = i18n::pluralise(
+					_t('ChangeSet.DESCRIPTION_OTHER_ITEM', 'other item'),
+					_t('ChangeSet.DESCRIPTION_OTHER_ITEMS', 'other items'),
+					$countedOther
+				);
+			} else {
+				$parts[] = i18n::pluralise(
+					_t('ChangeSet.DESCRIPTION_ITEM', 'item'),
+					_t('ChangeSet.DESCRIPTION_ITEMS', 'items'),
+					$countedOther
+				);
 			}
 		}
 
