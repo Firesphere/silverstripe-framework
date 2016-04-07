@@ -7,7 +7,7 @@ import SilverStripeComponent from 'silverstripe-component';
  */
 class ChangeSetItem extends SilverStripeComponent {
   render() {
-    let badge = '',
+    let badge, links,
       item = this.props.item;
 
     // change badge
@@ -26,10 +26,13 @@ class ChangeSetItem extends SilverStripeComponent {
         break;
     }
 
+    // Linked items
+    links = <span className="btnbtn-link pull-xs-right">[lk] 3 links</span>;
+
     return (
       <div>
         <h6 className="list-group-item-heading">{item.Title}</h6>
-        <span className="btnbtn-link pull-xs-right">[lk] 3 links</span>
+        {links}
         {badge}
       </div>
     );

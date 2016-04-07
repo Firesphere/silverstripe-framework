@@ -78,28 +78,36 @@ class CampaignAdminContainer extends SilverStripeComponent {
         accordionItems = [],
         groupCount = group.items.length,
         title = groupCount + ' ' +  (groupCount === 1 ? group.singular : group.plural),
-        id = 'Set_' + setID + '_Group_' + className;
+        groupid = 'Set_' + setID + '_Group_' + className;
 
       // Create items for this group
       group.items.forEach(item => {
+        // Add extra css class for published items
+        let itemClassName = '';
+        if(item.ChangeType === 'none') {
+          itemClassName = 'list-group-item--published';
+        }
+
         accordionItems.push(
-          <AccordionItem key={item.ID}>
+          <AccordionItem key={item.ID} className={itemClassName}>
             <ChangeSetItem item={item} />
           </AccordionItem>
         );
       });
 
       // Merge into group
-      accordionGroups.push(<AccordionGroup key={id} id={id} title={title}>{accordionItems}</AccordionGroup>);
+      accordionGroups.push(<AccordionGroup key={groupid} groupid={groupid} title={title}>{accordionItems}</AccordionGroup>);
     });
 
     return (
       <div className={classNames}>
         <div className="cms-campaigns collapse in" aria-expanded="true">
           <NorthHeader />
-          <Accordion>
-            {accordionGroups}
-          </Accordion>
+          <div className="col-md-12 campaign-items">
+            <Accordion>
+              {accordionGroups}
+            </Accordion>
+          </div>
         </div>
         { previewUrl && <CampaignPreview previewUrl={previewUrl}/> }
       </div>
