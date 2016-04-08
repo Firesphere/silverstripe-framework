@@ -292,40 +292,40 @@
 				font-weight: 400;
 				font-size: 14px;
 			}
-		}
 
-		.list-group {
-			margin-left: -0.9375rem;
-			margin-right: -0.9375rem;
+			.list-group {
+				margin-left: -0.9375rem;
+				margin-right: -0.9375rem;
 
-			border-bottom: 1px solid #ddd;
-			margin-bottom: .75rem;
+				border-bottom: 1px solid #ddd;
+				margin-bottom: .75rem;
 
-			.list-group-item {
-				padding-left: 0.9375rem; /* would normally be set in variables as 20px */
-				padding-right: 0.9375rem;
-				min-height: 64px;
-				cursor: pointer;
-				text-decoration: none;
+				.list-group-item {
+					padding-left: 0.9375rem; /* would normally be set in variables as 20px */
+					padding-right: 0.9375rem;
+					min-height: 64px;
+					cursor: pointer;
+					text-decoration: none;
 
-				&:first-child {
-					border-top: none;
-				}
+					&:first-child {
+						border-top: none;
+					}
 
-				.item__thumbnail {
-					width: 64px;
-					height: 64px;
-					display: block;
-					background: #ccc;
-					float: left;
-					margin: -0.75rem 12px -0.75rem -0.9375rem;
-				}
+					.item__thumbnail {
+						width: 64px;
+						height: 64px;
+						display: block;
+						background: #ccc;
+						float: left;
+						margin: -0.75rem 12px -0.75rem -0.9375rem;
+					}
 
-				.label {
-					text-transform: uppercase;
-					font-size: 10px;
-					font-weight: 400;
-					letter-spacing: .4px;
+					.label {
+						text-transform: uppercase;
+						font-size: 10px;
+						font-weight: 400;
+						letter-spacing: .4px;
+					}
 				}
 			}
 		}

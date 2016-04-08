@@ -32,12 +32,12 @@ class CampaignAdminContainer extends SilverStripeComponent {
       .routeAppliesToCurrentLocation(`/${this.props.config.itemListViewLink}`);
 
     if (isListRoute) {
-    const setID = 1;
+      const setID = 1;
       return this.renderItemListView(setID);
     }
 
     return this.renderIndexView();
-    }
+  }
 
   /**
    * Renders the default view which displays a list of Campaigns.
@@ -56,7 +56,7 @@ class CampaignAdminContainer extends SilverStripeComponent {
             icon={'plus-circled'}
             handleClick={this.addCampaign}
           />
-          <FormBuilder schemaUrl={schemaUrl} createFn={this.createFn}/>
+          <FormBuilder schemaUrl={schemaUrl} createFn={this.createFn} />
         </div>
       </div>
     );
@@ -93,7 +93,7 @@ class CampaignAdminContainer extends SilverStripeComponent {
         // Add extra css class for published items
         let itemClassName = '';
 
-        if(item.ChangeType === 'none') {
+        if (item.ChangeType === 'none') {
           itemClassName = 'list-group-item--published';
         }
 
@@ -122,7 +122,7 @@ class CampaignAdminContainer extends SilverStripeComponent {
             </Accordion>
           </div>
         </div>
-        { previewUrl && <CampaignPreview previewUrl={previewUrl}/> }
+        { previewUrl && <CampaignPreview previewUrl={previewUrl} /> }
       </div>
     );
   }
@@ -191,62 +191,7 @@ class CampaignAdminContainer extends SilverStripeComponent {
    */
   itemsForSet() {
     // hard coded json
-    return [
-      {
-        "_links": {
-          "self": {
-            "href": "admin\/campaigns\/item\/1"
-          }
-          },
-        "Plural": "Pages",
-        "Thumbnail": null
-        },
-      {
-        "_links": {
-          "self": {
-            "href": "admin\/campaigns\/item\/2"
-          }
-          },
-        "Plural": "Pages",
-        "Thumbnail": null
-      },
-      {
-        "_links": {
-          "self": {
-            "href": "admin\/campaigns\/item\/3"
-          }
-        },
-        "Plural": "Pages",
-        "Thumbnail": null
-      },
-      {
-        "_links": {
-          "self": {
-            "href": "admin\/campaigns\/item\/4"
-          }
-        },
-        "Plural": "Pages",
-        "Thumbnail": null
-      },
-      {
-        "_links": {
-          "self": {
-            "href": "admin\/campaigns\/item\/5"
-          }
-        },
-        "Plural": "Pages",
-        "Thumbnail": null
-      },
-      {
-        "_links": {
-          "self": {
-            "href": "admin\/campaigns\/item\/7"
-          }
-          },
-        "Plural": "Files",
-        "Thumbnail": "\/assets\/Uploads\/7e2bc8d2e1\/Fireworks__PadWzY0LDY0LCJGRkZGRkYiXQ.jpg"
-      }
-    ];
+    return require('./dummyset.json');
   }
 
   addCampaign() {
