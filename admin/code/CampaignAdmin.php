@@ -58,6 +58,7 @@ class CampaignAdmin extends LeftAndMain implements PermissionProvider {
 					'schemaUrl' => $this->Link('schema/EditForm')
 				]
 			],
+			'setListViewLink' => Config::inst()->get($this->class, 'url_segment'),
 			'itemListViewLink' => Config::inst()->get($this->class, 'url_segment') . '/set/:id/show',
 			'itemListViewEndpoint' => Config::inst()->get($this->class, 'url_segment') . '/set/:id/show',
 		]);
@@ -343,7 +344,7 @@ JSON;
 	 */
 	public function readCampaign(SS_HTTPRequest $request) {
 		$response = new SS_HTTPResponse();
-		
+
 		if ($request->getHeader('Accept') == 'text/json') {
 		$response->addHeader('Content-Type', 'application/json');
 			$changeSet = ChangeSet::get()->byId($request->param('ID'));

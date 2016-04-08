@@ -8,6 +8,7 @@ import * as configActions from 'state/config/actions';
 import ConfigReducer from 'state/config/reducer';
 import SchemaReducer from 'state/schema/reducer';
 import RecordsReducer from 'state/records/reducer';
+import CampaignAdminReducer from 'state/campaignAdmin/reducer';
 
 // Sections
 // eslint-disable-next-line no-unused-vars
@@ -17,6 +18,7 @@ function appBoot() {
   reducerRegister.add('config', ConfigReducer);
   reducerRegister.add('schemas', SchemaReducer);
   reducerRegister.add('records', RecordsReducer);
+  reducerRegister.add('campaignAdmin', CampaignAdminReducer);
 
   const initialState = {};
   const rootReducer = combineReducers(reducerRegister.getAll());

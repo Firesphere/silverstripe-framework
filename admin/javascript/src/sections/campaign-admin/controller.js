@@ -1,15 +1,13 @@
 import React from 'react';
+import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
+import * as actions from 'state/campaignAdmin/actions';
 import SilverStripeComponent from 'silverstripe-component';
 import FormAction from 'components/form-action/index';
 import i18n from 'i18n';
 import NorthHeader from 'components/north-header/index';
 import FormBuilder from 'components/form-builder/index';
-import CampaignPreview from './preview';
-import Accordion from 'components/accordion/index';
-import AccordionGroup from 'components/accordion/group';
-import AccordionItem from 'components/accordion/item';
-import ChangeSetItem from './item';
+import ChangeSetContainer from './list';
 
 class CampaignAdminContainer extends SilverStripeComponent {
 
@@ -20,20 +18,22 @@ class CampaignAdminContainer extends SilverStripeComponent {
   }
 
   componentDidMount() {
-    window.ss.router(`/${this.props.config.itemListViewLink}`, () => {
-      this.forceUpdate();
+    // Set selected set
+    window.ss.router(`/${this.props.config.itemListViewLink}`, (ctx, next) => {
+      let setid = ctx.params.id;
+      this.props.actions.showSetItems(setid);
     });
+
+    // Go back to main list
+    window.ss.router(`/${this.props.config.setListViewLink}`, () => {
+      this.props.actions.showSetList();
+    });
+
   }
 
   render() {
-    const isListRoute = window
-      .ss
-      .router
-      .routeAppliesToCurrentLocation(`/${this.props.config.itemListViewLink}`);
-
-    if (isListRoute) {
-      const setID = 1;
-      return this.renderItemListView(setID);
+    if (this.props.setid) {
+      return this.renderItemListView();
     }
 
     return this.renderIndexView();
@@ -65,65 +65,11 @@ class CampaignAdminContainer extends SilverStripeComponent {
   /**
    * Renders a list of items in a Campaign.
    *
-   * @param string setID - ID of the Campaign to display items for.
-   *
    * @return object
    */
-  renderItemListView(setID) {
-    const itemID = 1;
-
-    // Trigger different layout when preview is enabled
-    const previewUrl = this.previewURLForItem(itemID);
-    const itemGroups = this.groupItemsForSet(setID);
-    const classNames = previewUrl ? 'cms-middle with-preview' : 'cms-middle no-preview';
-
-    // Get items in this set
-    let accordionGroups = [];
-
-    Object.keys(itemGroups).forEach(className => {
-      const group = itemGroups[className];
-      const groupCount = group.items.length;
-
-      let accordionItems = [];
-      let title = `${groupCount} ${groupCount === 1 ? group.singular : group.plural}`;
-      let groupid = `Set_${setID}_Group_${className}`;
-
-      // Create items for this group
-      group.items.forEach(item => {
-        // Add extra css class for published items
-        let itemClassName = '';
-
-        if (item.ChangeType === 'none') {
-          itemClassName = 'list-group-item--published';
-        }
-
-        accordionItems.push(
-          <AccordionItem key={item.ID} className={itemClassName}>
-            <ChangeSetItem item={item} />
-          </AccordionItem>
-        );
-      });
-
-      // Merge into group
-      accordionGroups.push(
-        <AccordionGroup key={groupid} groupid={groupid} title={title}>
-          {accordionItems}
-        </AccordionGroup>
-      );
-    });
-
+  renderItemListView() {
     return (
-      <div className={classNames}>
-        <div className="cms-campaigns collapse in" aria-expanded="true">
-          <NorthHeader />
-          <div className="col-md-12 campaign-items">
-            <Accordion>
-              {accordionGroups}
-            </Accordion>
-          </div>
-        </div>
-        { previewUrl && <CampaignPreview previewUrl={previewUrl} /> }
-      </div>
+      <ChangeSetContainer setid={this.props.setid} itemListViewEndpoint={this.props.config.itemListViewEndpoint}/>
     );
   }
 
@@ -190,6 +136,8 @@ class CampaignAdminContainer extends SilverStripeComponent {
    * @return array
    */
   itemsForSet() {
+    const endpoint = this.props.config.itemListViewEndpoint;
+    console.log(endpoint);
     // hard coded json
     return require('./dummyset.json');
   }
@@ -214,7 +162,14 @@ CampaignAdminContainer.propTypes = {
 function mapStateToProps(state, ownProps) {
   return {
     config: state.config.sections[ownProps.sectionConfigKey],
+    setid: state.campaignAdmin.setid,
   };
 }
 
-export default connect(mapStateToProps)(CampaignAdminContainer);
+function mapDispatchToProps(dispatch) {
+  return {
+    actions: bindActionCreators(actions, dispatch),
+  };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(CampaignAdminContainer);

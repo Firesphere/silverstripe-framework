@@ -2,7 +2,7 @@ import React from 'react';
 import SilverStripeComponent from 'silverstripe-component';
 
 /**
- * Describes an individual changeset
+ * Describes an individual changeset item
  */
 class ChangeSetItem extends SilverStripeComponent {
   render() {
