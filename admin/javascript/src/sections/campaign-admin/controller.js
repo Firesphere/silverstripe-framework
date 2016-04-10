@@ -19,16 +19,14 @@ class CampaignAdminContainer extends SilverStripeComponent {
 
   componentDidMount() {
     // Set selected set
-    window.ss.router(`/${this.props.config.itemListViewLink}`, (ctx, next) => {
-      let setid = ctx.params.id;
-      this.props.actions.showSetItems(setid);
+    window.ss.router(`/${this.props.config.itemListViewLink}`, (ctx) => {
+      this.props.actions.showSetItems(ctx.params.id);
     });
 
     // Go back to main list
     window.ss.router(`/${this.props.config.setListViewLink}`, () => {
       this.props.actions.showSetList();
     });
-
   }
 
   render() {
@@ -68,8 +66,13 @@ class CampaignAdminContainer extends SilverStripeComponent {
    * @return object
    */
   renderItemListView() {
+    const props = {
+      setid: this.props.setid,
+      itemListViewEndpoint: this.props.config.itemListViewEndpoint,
+    };
+
     return (
-      <ChangeSetContainer setid={this.props.setid} itemListViewEndpoint={this.props.config.itemListViewEndpoint}/>
+      <ChangeSetContainer {...props} />
     );
   }
 
@@ -82,7 +85,19 @@ class CampaignAdminContainer extends SilverStripeComponent {
    * @return object - Instanciated React component
    */
   createFn(Component, props) {
-    return <Component {...props} />;
+    if (props.component === 'GridField') {
+      const extendedProps = Object.assign({}, props, {
+        data: Object.assign({}, props.data, {
+          handleDrillDown: () => {
+            console.log('route to list view');
+          },
+        }),
+      });
+
+      return <Component key={extendedProps.name} {...extendedProps} />;
+    }
+
+    return <Component key={props.name} {...props} />;
   }
 
   /**

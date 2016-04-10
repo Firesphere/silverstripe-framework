@@ -41,6 +41,8 @@ class GridField extends SilverStripeComponent {
 
   render() {
     const records = this.props.records;
+    const handleDrillDown = this.props.data.handleDrillDown;
+
     if (!records) {
       return <div></div>;
     }
@@ -78,7 +80,11 @@ class GridField extends SilverStripeComponent {
         </GridFieldCell>
       );
 
-      return <GridFieldRow key={i}>{cells.concat(rowActions)}</GridFieldRow>;
+      return (
+        <GridFieldRow key={i} handleDrillDown={handleDrillDown}>
+          {cells.concat(rowActions)}
+        </GridFieldRow>
+      );
     });
 
     return (
@@ -112,6 +118,7 @@ GridField.propTypes = {
     recordType: React.PropTypes.string.isRequired,
     headerColumns: React.PropTypes.array,
     collectionReadEndpoint: React.PropTypes.object,
+    handleDrillDown: React.PropTypes.func,
   }),
 };
 
