@@ -103,11 +103,17 @@ export class FormBuilderComponent extends SilverStripeComponent {
     })
       .then(response => response.json())
       .then(json => {
+        // TODO See "Enable once <CampaignAdmin> ..." below
         this.setState({ isFetching: false });
         this.props.actions.setSchema(json);
       });
 
-    this.setState({ isFetching: true });
+    // TODO Enable once <CampaignAdmin> is initialised via page.js route callbacks
+    // At the moment, it's running an Entwine onadd() rule which ends up
+    // rendering the index view, and only then calling route.start() to
+    // match the detail view (admin/campaigns/set/:id/show).
+    // This causes the form builder to be unmounted during a fetch() call.
+    // this.setState({ isFetching: true });
 
     return this.formSchemaPromise;
   }
