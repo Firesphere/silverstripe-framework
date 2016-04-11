@@ -7,16 +7,16 @@ import Accordion from 'components/accordion/index';
 import AccordionGroup from 'components/accordion/group';
 import AccordionItem from 'components/accordion/item';
 import NorthHeader from 'components/north-header/index';
-import ChangeSetItem from './item';
+import CampaignItem from './item';
 import CampaignPreview from './preview';
 
 /**
- * Represents a change set list view
+ * Represents a campaign list view
  */
-class ChangeSetContainer extends SilverStripeComponent {
+class CampaignListContainer extends SilverStripeComponent {
 
   componentDidMount() {
-    const fetchURL = this.props.itemListViewEndpoint.replace(/:id/, this.props.setid);
+    const fetchURL = this.props.itemListViewEndpoint.replace(/:id/, this.props.campaignId);
     super.componentDidMount();
     this.props.actions.fetchRecord('ChangeSet', 'get', fetchURL);
   }
@@ -28,7 +28,7 @@ class ChangeSetContainer extends SilverStripeComponent {
    */
   render() {
     const itemID = 1; // todo - hook up to "click" handler for changesetitems
-    const setID = this.props.setid;
+    const campaignId = this.props.campaignId;
 
     // Trigger different layout when preview is enabled
     const previewUrl = this.previewURLForItem(itemID);
@@ -44,7 +44,7 @@ class ChangeSetContainer extends SilverStripeComponent {
 
       let accordionItems = [];
       let title = `${groupCount} ${groupCount === 1 ? group.singular : group.plural}`;
-      let groupid = `Set_${setID}_Group_${className}`;
+      let groupid = `Set_${campaignId}_Group_${className}`;
 
       // Create items for this group
       group.items.forEach(item => {
@@ -57,7 +57,7 @@ class ChangeSetContainer extends SilverStripeComponent {
 
         accordionItems.push(
           <AccordionItem key={item.ID} className={itemClassName}>
-            <ChangeSetItem item={item} />
+            <CampaignItem item={item} />
           </AccordionItem>
         );
       });
@@ -137,9 +137,9 @@ class ChangeSetContainer extends SilverStripeComponent {
 function mapStateToProps(state, ownProps) {
   // Find record specific to this item
   let record = null;
-  if (state.records && state.records.ChangeSet && ownProps.setid) {
+  if (state.records && state.records.ChangeSet && ownProps.campaignId) {
     record = state.records.ChangeSet.find(
-      (nextRecord) => (nextRecord.ID === parseInt(ownProps.setid, 10))
+      (nextRecord) => (nextRecord.ID === parseInt(ownProps.campaignId, 10))
     );
   }
   return {
@@ -153,4 +153,4 @@ function mapDispatchToProps(dispatch) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ChangeSetContainer);
+export default connect(mapStateToProps, mapDispatchToProps)(CampaignListContainer);

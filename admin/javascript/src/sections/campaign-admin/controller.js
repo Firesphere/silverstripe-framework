@@ -1,13 +1,13 @@
 import React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import * as actions from 'state/campaignAdmin/actions';
+import * as actions from 'state/campaign/actions';
 import SilverStripeComponent from 'silverstripe-component';
 import FormAction from 'components/form-action/index';
 import i18n from 'i18n';
 import NorthHeader from 'components/north-header/index';
 import FormBuilder from 'components/form-builder/index';
-import ChangeSetContainer from './list';
+import CampaignListContainer from './list';
 
 class CampaignAdminContainer extends SilverStripeComponent {
 
@@ -71,12 +71,12 @@ class CampaignAdminContainer extends SilverStripeComponent {
    */
   renderItemListView() {
     const props = {
-      setid: this.props.setid,
+      campaignId: this.props.campaignId,
       itemListViewEndpoint: this.props.config.itemListViewEndpoint,
     };
 
     return (
-      <ChangeSetContainer {...props} />
+      <CampaignListContainer {...props} />
     );
   }
 
@@ -150,8 +150,8 @@ CampaignAdminContainer.propTypes = {
 function mapStateToProps(state, ownProps) {
   return {
     config: state.config.sections[ownProps.sectionConfigKey],
-    setid: state.campaignAdmin.setid,
-    view: state.campaignAdmin.view,
+    campaignId: state.campaign.campaignId,
+    view: state.campaign.view,
   };
 }
 

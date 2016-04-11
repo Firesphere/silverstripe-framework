@@ -2,9 +2,9 @@ import React from 'react';
 import SilverStripeComponent from 'silverstripe-component';
 
 /**
- * Describes an individual changeset item
+ * Describes an individual campaign item
  */
-class ChangeSetItem extends SilverStripeComponent {
+class CampaignItem extends SilverStripeComponent {
   render() {
     let thumbnail = '';
     let badge = '';
@@ -46,4 +46,4 @@ class ChangeSetItem extends SilverStripeComponent {
     );
   }
 }
-export default ChangeSetItem;
+export default CampaignItem;

@@ -6,12 +6,12 @@ const initialState = {
   view: null
 };
 
-function campaignAdminReducer(state = initialState, action) {
+function campaignReducer(state = initialState, action) {
   switch (action.type) {
 
     case ACTION_TYPES.SET_CAMPAIGN_ACTIVE_CHANGESET:
       return deepFreeze(Object.assign({}, state, {
-        setid: action.payload.setid,
+        campaignId: action.payload.campaignId,
         view: action.payload.view,
       }));
 
@@ -21,4 +21,4 @@ function campaignAdminReducer(state = initialState, action) {
   }
 }
 
-export default campaignAdminReducer;
+export default campaignReducer;
