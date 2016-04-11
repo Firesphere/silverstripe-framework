@@ -15,6 +15,7 @@ class CampaignAdminContainer extends SilverStripeComponent {
     super(props);
 
     this.addCampaign = this.addCampaign.bind(this);
+    this.createFn = this.createFn.bind(this);
   }
 
   componentDidMount() {
@@ -85,11 +86,15 @@ class CampaignAdminContainer extends SilverStripeComponent {
    * @return object - Instanciated React component
    */
   createFn(Component, props) {
+    const showSetItems = this.props.actions.showSetItems;
+    const itemListViewLink = this.props.config.itemListViewLink;
     if (props.component === 'GridField') {
       const extendedProps = Object.assign({}, props, {
         data: Object.assign({}, props.data, {
-          handleDrillDown: () => {
-            console.log('route to list view');
+          handleDrillDown: (event, record) => {
+            // Set url and set list
+            window.ss.router.show(itemListViewLink.replace(/:id/, record.ID));
+            showSetItems(record.ID);
           },
         }),
       });
@@ -112,49 +117,6 @@ class CampaignAdminContainer extends SilverStripeComponent {
 
     // hard code in baseurl for any itemid preview url
     return document.getElementsByTagName('base')[0].href;
-  }
-
-  /**
-   * Group items for changeset display
-   *
-   * @param string setid
-   *
-   * @return array
-   */
-  groupItemsForSet(setid) {
-    const groups = {};
-    const items = this.itemsForSet(setid);
-
-    // group by whatever
-    items.forEach(item => {
-      // Create new group if needed
-      const classname = item.BaseClass;
-
-      if (!groups[classname]) {
-        groups[classname] = {
-          singular: item.Singular,
-          plural: item.Plural,
-          items: [],
-        };
-      }
-
-      // Push items
-      groups[classname].items.push(item);
-    });
-
-    return groups;
-  }
-
-  /**
-   * List of items for a set
-   *
-   * @return array
-   */
-  itemsForSet() {
-    const endpoint = this.props.config.itemListViewEndpoint;
-    console.log(endpoint);
-    // hard coded json
-    return require('./dummyset.json');
   }
 
   addCampaign() {

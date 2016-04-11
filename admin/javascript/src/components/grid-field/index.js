@@ -57,10 +57,21 @@ class GridField extends SilverStripeComponent {
     const header = <GridFieldHeader>{headerCells.concat(actionPlaceholder)}</GridFieldHeader>;
 
     const rows = records.map((record, i) => {
+      // Build cells
       const cells = columns.map((column, j) => {
         // Get value by dot notation
         const val = column.field.split('.').reduce((a, b) => a[b], record);
-        return <GridFieldCell key={j} width={column.width}>{val}</GridFieldCell>;
+        const cellProps = {
+          handleDrillDown: handleDrillDown ? (event) => handleDrillDown(event, record) : null,
+          className: handleDrillDown ? 'grid-field-cell-component--drillable' : '',
+          key: j,
+          width: column.width,
+        };
+        return (
+          <GridFieldCell {...cellProps}>
+            {val}
+          </GridFieldCell>
+        );
       });
 
       const rowActions = (
@@ -80,8 +91,13 @@ class GridField extends SilverStripeComponent {
         </GridFieldCell>
       );
 
+      const rowProps = {
+        key: i,
+        className: handleDrillDown ? 'grid-field-row-component--drillable' : '',
+      };
+
       return (
-        <GridFieldRow key={i} handleDrillDown={handleDrillDown}>
+        <GridFieldRow {...rowProps}>
           {cells.concat(rowActions)}
         </GridFieldRow>
       );
