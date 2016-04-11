@@ -1,4 +1,7 @@
 import React from 'react';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import * as actions from 'state/records/actions';
 import SilverStripeComponent from 'silverstripe-component';
 import Accordion from 'components/accordion/index';
 import AccordionGroup from 'components/accordion/group';
@@ -12,6 +15,12 @@ import CampaignPreview from './preview';
  */
 class ChangeSetContainer extends SilverStripeComponent {
 
+  componentDidMount() {
+    const fetchURL = this.props.itemListViewEndpoint.replace(/:id/, this.props.setid);
+    super.componentDidMount();
+    this.props.actions.fetchRecord('ChangeSet', 'get', fetchURL);
+  }
+
   /**
    * Renders a list of items in a Campaign.
    *
@@ -23,7 +32,7 @@ class ChangeSetContainer extends SilverStripeComponent {
 
     // Trigger different layout when preview is enabled
     const previewUrl = this.previewURLForItem(itemID);
-    const itemGroups = this.groupItemsForSet(setID);
+    const itemGroups = this.groupItemsForSet();
     const classNames = previewUrl ? 'cms-middle with-preview' : 'cms-middle no-preview';
 
     // Get items in this set
@@ -94,13 +103,14 @@ class ChangeSetContainer extends SilverStripeComponent {
   /**
    * Group items for changeset display
    *
-   * @param string setid
-   *
    * @return array
    */
-  groupItemsForSet(setid) {
+  groupItemsForSet() {
     const groups = {};
-    const items = this.itemsForSet(setid);
+    if (!this.props.record || !this.props.record._embedded) {
+      return groups;
+    }
+    const items = this.props.record._embedded.ChangeSetItems;
 
     // group by whatever
     items.forEach(item => {
@@ -122,19 +132,25 @@ class ChangeSetContainer extends SilverStripeComponent {
     return groups;
   }
 
-  /**
-   * List of items for a set
-   *
-   * @return array
-   */
-  itemsForSet() {
-    // const endpoint = this.props.itemListViewEndpoint;
-    // console.log(endpoint);
-    // hard coded json
-    return require('./dummyset.json');
-  }
-
 }
 
+function mapStateToProps(state, ownProps) {
+  // Find record specific to this item
+  let record = null;
+  if (state.records && state.records.ChangeSet && ownProps.setid) {
+    record = state.records.ChangeSet.find(
+      (nextRecord) => (nextRecord.ID === parseInt(ownProps.setid, 10))
+    );
+  }
+  return {
+    record: record || [],
+  };
+}
 
-export default ChangeSetContainer;
+function mapDispatchToProps(dispatch) {
+  return {
+    actions: bindActionCreators(actions, dispatch),
+  };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(ChangeSetContainer);

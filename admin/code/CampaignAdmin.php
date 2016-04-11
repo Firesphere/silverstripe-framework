@@ -61,7 +61,7 @@ class CampaignAdmin extends LeftAndMain implements PermissionProvider {
 				]
 			],
 			'campaignViewRoute' => $urlSegment . '/:type?/:id?/:view?',
-			'itemListViewEndpoint' => $urlSegment . '/set/:id/show',
+			'itemListViewEndpoint' => $this->Link('set/:id/show'),
 		]);
 	}
 
