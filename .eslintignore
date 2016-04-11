@@ -1,5 +1,6 @@
 # Ignore dist files
 javascript/dist/
+admin/javascript/dist/
 
 # Ignore legacy files
 javascript/src/AssetUploadField.js
@@ -35,3 +36,13 @@ admin/javascript/src/ssui.core.js
 
 # Ignore tests
 admin/javascript/**/tests/
+tests/
+
+# Ignore vendor
+node_modules/
+thirdparty/
+admin/thirdparty/
+
+# Ignore language files (auto-generated)
+javascript/lang/
+admin/javascript/lang/
