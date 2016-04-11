@@ -356,12 +356,10 @@ gulp.task('css', ['compile:css'], function () {
  * Watches for changes if --development flag is given
  */
 gulp.task('compile:css', function () {
-  var outputStyle = isDev ? 'expanded' : 'compressed';
-
   var tasks = rootCompileFolders.map(function(folder) {
     return gulp.src(folder + '/scss/**/*.scss')
       .pipe(sourcemaps.init())
-      .pipe(sass({ outputStyle: outputStyle })
+      .pipe(sass({ outputStyle: 'compressed' })
         .on('error', notify.onError({
           message: 'Error: <%= error.message %>'
         }))
