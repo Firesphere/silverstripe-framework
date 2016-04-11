@@ -28,7 +28,7 @@ class ChangeSetItem extends SilverStripeComponent {
     }
 
     // Linked items
-    let links = <span className="btnbtn-link pull-xs-right">[lk] 3 links</span>;
+    let links = <span className="list-group-item__linked item_visible-hovered">[lk] 3 links</span>;
 
     // Thumbnail
     if (item.Thumbnail) {
@@ -39,7 +39,7 @@ class ChangeSetItem extends SilverStripeComponent {
     return (
       <div>
         {thumbnail}
-        <h6 className="list-group-item-heading">{item.Title}</h6>
+        <h4 className="list-group-item-heading">{item.Title}</h4>
         {links}
         {badge}
       </div>
