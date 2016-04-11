@@ -32,7 +32,7 @@ export function fetchRecords(recordType, method, url) {
       type: ACTION_TYPES.FETCH_RECORDS_REQUEST,
       payload,
     });
-    return backend[method.toLowerCase()](populate(url, payload), headers)
+    return backend[method.toLowerCase()](populate(url, payload), {}, headers)
     .then(response => response.json())
     .then(json => {
       dispatch({
@@ -65,7 +65,7 @@ export function fetchRecord(recordType, method, url) {
       type: ACTION_TYPES.FETCH_RECORD_REQUEST,
       payload,
     });
-    return backend[method.toLowerCase()](populate(url, payload), headers)
+    return backend[method.toLowerCase()](populate(url, payload), {}, headers)
     .then(response => response.json())
     .then(json => {
       dispatch({

@@ -164,11 +164,17 @@ class SilverStripeBackend {
    * @experimental
    *
    * @param string url - Endpoint URL.
+   * @param object data - Data to send with the request.
    * @param Array headers
    * @return object - Promise
    */
-  get(url, headers = {}) {
-    return this.fetch(url, { method: 'get', credentials: 'same-origin', headers })
+  get(url, data = {}, headers = {}) {
+    return this.fetch(url, {
+      method: 'get',
+      credentials: 'same-origin',
+      headers,
+      body: data,
+    })
       .then(checkStatus);
   }
 
@@ -176,16 +182,15 @@ class SilverStripeBackend {
    * Makes a network request using the POST HTTP verb.
    *
    * @param string url - Endpoint URL.
-   * @param Array headers
    * @param object data - Data to send with the request.
+   * @param Array headers
    * @return object - Promise
    */
-  post(url, headers = {}, data = {}) {
+  post(url, data = {}, headers = {}) {
     const defaultHeaders = { 'Content-Type': 'application/x-www-form-urlencoded' };
-    const newHeaders = Object.assign({}, defaultHeaders, headers);
     return this.fetch(url, {
       method: 'post',
-      headers: newHeaders,
+      headers: Object.assign({}, defaultHeaders, headers),
       credentials: 'same-origin',
       body: data,
     })
@@ -196,11 +201,11 @@ class SilverStripeBackend {
    * Makes a newtwork request using the PUT HTTP verb.
    *
    * @param string url - Endpoint URL.
-   * @param Array headers
    * @param object data - Data to send with the request.
+   * @param Array headers
    * @return object - Promise
    */
-  put(url, headers = {}, data = {}) {
+  put(url, data = {}, headers = {}) {
     return this.fetch(url, { method: 'put', credentials: 'same-origin', body: data, headers })
       .then(checkStatus);
   }
@@ -209,11 +214,11 @@ class SilverStripeBackend {
    * Makes a newtwork request using the DELETE HTTP verb.
    *
    * @param string url - Endpoint URL.
-   * @param Array headers
    * @param object data - Data to send with the request.
+   * @param Array headers
    * @return object - Promise
    */
-  delete(url, headers = {}, data = {}) {
+  delete(url, data = {}, headers = {}) {
     return this.fetch(url, { method: 'delete', credentials: 'same-origin', body: data, headers })
       .then(checkStatus);
   }

@@ -169,21 +169,26 @@
     }, {
       key: 'get',
       value: function get(url) {
-        var headers = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var data = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var headers = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
-        return this.fetch(url, { method: 'get', credentials: 'same-origin', headers: headers }).then(checkStatus);
+        return this.fetch(url, {
+          method: 'get',
+          credentials: 'same-origin',
+          headers: headers,
+          body: data
+        }).then(checkStatus);
       }
     }, {
       key: 'post',
       value: function post(url) {
-        var headers = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-        var data = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+        var data = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var headers = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
         var defaultHeaders = { 'Content-Type': 'application/x-www-form-urlencoded' };
-        var newHeaders = Object.assign({}, defaultHeaders, headers);
         return this.fetch(url, {
           method: 'post',
-          headers: newHeaders,
+          headers: Object.assign({}, defaultHeaders, headers),
           credentials: 'same-origin',
           body: data
         }).then(checkStatus);
@@ -191,16 +196,16 @@
     }, {
       key: 'put',
       value: function put(url) {
-        var headers = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-        var data = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+        var data = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var headers = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
         return this.fetch(url, { method: 'put', credentials: 'same-origin', body: data, headers: headers }).then(checkStatus);
       }
     }, {
       key: 'delete',
       value: function _delete(url) {
-        var headers = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-        var data = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+        var data = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var headers = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
         return this.fetch(url, { method: 'delete', credentials: 'same-origin', body: data, headers: headers }).then(checkStatus);
       }
