@@ -51,6 +51,8 @@ class CampaignAdmin extends LeftAndMain implements PermissionProvider {
 	private static $thumbnail_height = 64;
 
 	public function getClientConfig() {
+		$urlSegment = Config::inst()->get($this->class, 'url_segment');
+
 		return array_merge(parent::getClientConfig(), [
 			'forms' => [
 				// TODO Use schemaUrl instead
@@ -58,9 +60,8 @@ class CampaignAdmin extends LeftAndMain implements PermissionProvider {
 					'schemaUrl' => $this->Link('schema/EditForm')
 				]
 			],
-			'setListViewLink' => Config::inst()->get($this->class, 'url_segment'),
-			'itemListViewLink' => Config::inst()->get($this->class, 'url_segment') . '/set/:id/show',
-			'itemListViewEndpoint' => Config::inst()->get($this->class, 'url_segment') . '/set/:id/show',
+			'campaignViewRoute' => $urlSegment . '/:type?/:id?/:view?',
+			'itemListViewEndpoint' => $urlSegment . '/set/:id/show',
 		]);
 	}
 

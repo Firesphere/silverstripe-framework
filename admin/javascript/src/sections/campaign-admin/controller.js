@@ -19,23 +19,26 @@ class CampaignAdminContainer extends SilverStripeComponent {
   }
 
   componentDidMount() {
-    // Set selected set
-    window.ss.router(`/${this.props.config.itemListViewLink}`, (ctx) => {
-      this.props.actions.showSetItems(ctx.params.id);
-    });
-
-    // Go back to main list
-    window.ss.router(`/${this.props.config.setListViewLink}`, () => {
-      this.props.actions.showSetList();
+    window.ss.router(`/${this.props.config.campaignViewRoute}`, (ctx) => {
+      this.props.actions.showCampaignView(ctx.params.id, ctx.params.view);
     });
   }
 
   render() {
-    if (this.props.setid) {
-      return this.renderItemListView();
+    let view = null;
+
+    switch (this.props.view) {
+      case 'show':
+        view = this.renderItemListView();
+        break;
+      case 'edit':
+        view = this.renderDetailEditView();
+        break;
+      default:
+        view = this.renderIndexView();
     }
 
-    return this.renderIndexView();
+    return view;
   }
 
   /**
@@ -77,6 +80,10 @@ class CampaignAdminContainer extends SilverStripeComponent {
     );
   }
 
+  renderDetailEditView() {
+    return <p>Edit</p>;
+  }
+
   /**
    * Hook to allow customisation of components being constructed by FormBuilder.
    *
@@ -86,15 +93,19 @@ class CampaignAdminContainer extends SilverStripeComponent {
    * @return object - Instanciated React component
    */
   createFn(Component, props) {
-    const showSetItems = this.props.actions.showSetItems;
-    const itemListViewLink = this.props.config.itemListViewLink;
+    const campaignViewRoute = this.props.config.campaignViewRoute;
+
     if (props.component === 'GridField') {
       const extendedProps = Object.assign({}, props, {
         data: Object.assign({}, props.data, {
           handleDrillDown: (event, record) => {
             // Set url and set list
-            window.ss.router.show(itemListViewLink.replace(/:id/, record.ID));
-            showSetItems(record.ID);
+            const path = campaignViewRoute
+              .replace(/:type\?/, 'set')
+              .replace(/:id\?/, record.ID)
+              .replace(/:view\?/, 'show');
+
+            window.ss.router.show(path);
           },
         }),
       });
@@ -140,6 +151,7 @@ function mapStateToProps(state, ownProps) {
   return {
     config: state.config.sections[ownProps.sectionConfigKey],
     setid: state.campaignAdmin.setid,
+    view: state.campaignAdmin.view,
   };
 }
 
