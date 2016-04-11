@@ -2,8 +2,8 @@ import deepFreeze from 'deep-freeze';
 import ACTION_TYPES from './action-types';
 
 const initialState = {
-  setid: null,
-  view: null
+  campaignId: null,
+  view: null,
 };
 
 function campaignReducer(state = initialState, action) {
