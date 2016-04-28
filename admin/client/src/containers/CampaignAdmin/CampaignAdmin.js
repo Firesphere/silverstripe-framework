@@ -1,8 +1,6 @@
 import React from 'react';
-import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import backend from 'lib/Backend';
-import * as actions from 'state/campaign/CampaignActions';
 import SilverStripeComponent from 'lib/SilverStripeComponent';
 import FormAction from 'components/FormAction/FormAction';
 import i18n from 'i18n';
@@ -19,7 +17,7 @@ class CampaignAdmin extends SilverStripeComponent {
     this.publishApi = backend.createEndpointFetcher({
       url: this.props.sectionConfig.publishEndpoint.url,
       method: this.props.sectionConfig.publishEndpoint.method,
-      defaultData: { SecurityID: this.props.config.SecurityID },
+      defaultData: { SecurityID: this.props.securityId },
       payloadSchema: {
         id: { urlReplacement: ':id', remove: true },
       },
@@ -27,36 +25,6 @@ class CampaignAdmin extends SilverStripeComponent {
     this.campaignListCreateFn = this.campaignListCreateFn.bind(this);
     this.campaignAddCreateFn = this.campaignAddCreateFn.bind(this);
     this.campaignEditCreateFn = this.campaignEditCreateFn.bind(this);
-  }
-
-  componentDidMount() {
-    super.componentDidMount();
-    // While a component is mounted it will intercept all routes and handle internally
-    let captureRoute = true;
-    const route = window.ss.router.resolveURLToBase(this.props.sectionConfig.campaignViewRoute);
-
-    // Capture routing within this section
-    window.ss.router(route, (ctx, next) => {
-      if (captureRoute) {
-        // If this component is mounted, then handle all page changes via
-        // state / redux
-        this.props.actions.showCampaignView(ctx.params.id, ctx.params.view);
-      } else {
-        // If component is not mounted, we need to allow root routes to load
-        // this section in via ajax
-        next();
-      }
-    });
-
-    // When leaving this section to go to another top level section then
-    // disable route capturing.
-    window.ss.router.exit(route, (ctx, next) => {
-      const applies = window.ss.router.routeAppliesToCurrentLocation(route);
-      if (!applies) {
-        captureRoute = false;
-      }
-      next();
-    });
   }
 
   render() {
@@ -309,34 +277,18 @@ class CampaignAdmin extends SilverStripeComponent {
 }
 
 CampaignAdmin.propTypes = {
-  actions: React.PropTypes.object.isRequired,
   campaignId: React.PropTypes.string,
-  config: React.PropTypes.shape({
-    form: React.PropTypes.shape({
-      editForm: React.PropTypes.shape({
-        schemaUrl: React.PropTypes.string,
-      }),
-    }),
-    SecurityID: React.PropTypes.string,
-  }),
   sectionConfig: React.PropTypes.object.isRequired,
-  sectionConfigKey: React.PropTypes.string.isRequired,
+  securityId: React.PropTypes.string.isRequired,
   view: React.PropTypes.string,
 };
 
-function mapStateToProps(state, ownProps) {
+function mapStateToProps(state) {
   return {
     config: state.config,
-    sectionConfig: state.config.sections[ownProps.sectionConfigKey],
     campaignId: state.campaign.campaignId,
     view: state.campaign.view,
   };
 }
 
-function mapDispatchToProps(dispatch) {
-  return {
-    actions: bindActionCreators(actions, dispatch),
-  };
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(CampaignAdmin);
+export default connect(mapStateToProps)(CampaignAdmin);
