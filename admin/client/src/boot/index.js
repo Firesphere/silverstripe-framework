@@ -4,8 +4,8 @@ import thunkMiddleware from 'redux-thunk';
 import createLogger from 'redux-logger';
 import ConfigHelpers from 'lib/Config';
 import router from 'lib/Router';
-import routeRegister from 'lib/RouteRegister';
-import reducerRegister from 'lib/ReducerRegister';
+import RouteRegister from 'lib/RouteRegister';
+import ReducerRegister from 'lib/ReducerRegister';
 import * as configActions from 'state/config/ConfigActions';
 import ConfigReducer from 'state/config/ConfigReducer';
 import FormReducer from 'state/form/FormReducer';
@@ -17,8 +17,27 @@ import CampaignReducer from 'state/campaign/CampaignReducer';
 // eslint-disable-next-line no-unused-vars
 import CampaignAdmin from 'containers/CampaignAdmin/controller';
 
+/*
+ * We're assigning instances to the `ss` namespace because singletons only
+ * work within the context on a single Browserify bundle.
+ *
+ * For example - assume the `lib` bundle exposes a singleton called `register`.
+ * If bundle `a` imports `register`, as an external dependency, then all modules
+ * in bundle `a` will get the same copy of `register` when importing it.
+ *
+ * Likewise if bundle `b` imports `register` as an external dependency, all modules
+ * in bundle `b` will get the same copy of `register`.
+ *
+ * However the copy of `register` available to all modules in bundle `a` is not
+ * the same copy of `register` that's available to modules in bundle `b`.
+ * Singletons only work within the context of a Browserify bundle but not across bundles.
+ *
+ * @TODO Look into SystemJS as a solution https://github.com/systemjs/systemjs
+ */
 window.ss = window.ss || {};
 window.ss.router = router;
+window.ss.routeRegister = new RouteRegister();
+window.ss.reducerRegister = new ReducerRegister();
 
 function getBasePath() {
   const a = document.createElement('a');
@@ -38,14 +57,14 @@ function getBasePath() {
 }
 
 function appBoot() {
-  reducerRegister.add('config', ConfigReducer);
-  reducerRegister.add('form', FormReducer);
-  reducerRegister.add('schemas', SchemaReducer);
-  reducerRegister.add('records', RecordsReducer);
-  reducerRegister.add('campaign', CampaignReducer);
+  window.ss.reducerRegister.add('config', ConfigReducer);
+  window.ss.reducerRegister.add('form', FormReducer);
+  window.ss.reducerRegister.add('schemas', SchemaReducer);
+  window.ss.reducerRegister.add('records', RecordsReducer);
+  window.ss.reducerRegister.add('campaign', CampaignReducer);
 
   const initialState = {};
-  const rootReducer = combineReducers(reducerRegister.getAll());
+  const rootReducer = combineReducers(window.ss.reducerRegister.getAll());
   const middleware = [thunkMiddleware];
 
   if (window.ss.config.environment === 'dev') {
@@ -53,7 +72,7 @@ function appBoot() {
   }
 
   const createStoreWithMiddleware = applyMiddleware(...middleware)(createStore);
-  const store = window.store = createStoreWithMiddleware(rootReducer, initialState);
+  const store = createStoreWithMiddleware(rootReducer, initialState);
 
   // Set the initial config state.
   store.dispatch(configActions.setConfig(window.ss.config));
@@ -71,7 +90,7 @@ function appBoot() {
   ConfigHelpers
     .getTopLevelRoutes()
     .forEach((route) => {
-      routeRegister.add(`/${route}(/*?)?`, (ctx, next) => {
+      window.ss.routeRegister.add(`/${route}(/*?)?`, (ctx, next) => {
         if (document.readyState !== 'complete') {
           next();
           return;
@@ -85,7 +104,7 @@ function appBoot() {
       });
     });
 
-  const registeredRoutes = routeRegister.getAll();
+  const registeredRoutes = window.ss.routeRegister.getAll();
 
   for (const route in registeredRoutes) {
     if (registeredRoutes.hasOwnProperty(route)) {
@@ -96,7 +115,7 @@ function appBoot() {
   router.start();
 
   // Clean up referneces to callbacks in the route register.
-  routeRegister.removeAll();
+  window.ss.routeRegister.removeAll();
 }
 
 window.onload = appBoot;
