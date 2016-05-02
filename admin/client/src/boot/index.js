@@ -5,7 +5,7 @@ import createLogger from 'redux-logger';
 import ConfigHelpers from 'lib/Config';
 import router from 'lib/Router';
 import routeRegister from 'lib/RouteRegister';
-import ReducerRegister from 'lib/ReducerRegister';
+import reducerRegister from 'lib/ReducerRegister';
 import * as configActions from 'state/config/ConfigActions';
 import ConfigReducer from 'state/config/ConfigReducer';
 import FormReducer from 'state/form/FormReducer';
@@ -36,7 +36,6 @@ import CampaignAdmin from 'containers/CampaignAdmin/controller';
  */
 window.ss = window.ss || {};
 window.ss.router = router;
-window.ss.reducerRegister = new ReducerRegister();
 
 function getBasePath() {
   const a = document.createElement('a');
@@ -56,14 +55,14 @@ function getBasePath() {
 }
 
 function appBoot() {
-  window.ss.reducerRegister.add('config', ConfigReducer);
-  window.ss.reducerRegister.add('form', FormReducer);
-  window.ss.reducerRegister.add('schemas', SchemaReducer);
-  window.ss.reducerRegister.add('records', RecordsReducer);
-  window.ss.reducerRegister.add('campaign', CampaignReducer);
+  reducerRegister.add('config', ConfigReducer);
+  reducerRegister.add('form', FormReducer);
+  reducerRegister.add('schemas', SchemaReducer);
+  reducerRegister.add('records', RecordsReducer);
+  reducerRegister.add('campaign', CampaignReducer);
 
   const initialState = {};
-  const rootReducer = combineReducers(window.ss.reducerRegister.getAll());
+  const rootReducer = combineReducers(reducerRegister.getAll());
   const middleware = [thunkMiddleware];
 
   if (window.ss.config.environment === 'dev') {
