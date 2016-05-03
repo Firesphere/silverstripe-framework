@@ -674,6 +674,10 @@
       },
 
       _tabStateUrl: function _tabStateUrl() {
+        if (window.history.state === null) {
+          return;
+        }
+
         return window.history.state.path.replace(/\?.*/, '').replace(/#.*/, '').replace($('base').attr('href'), '');
       },
 
