@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import backend from 'lib/Backend';
+import router from 'lib/Router';
 import SilverStripeComponent from 'lib/SilverStripeComponent';
 import FormAction from 'components/FormAction/FormAction';
 import i18n from 'i18n';
@@ -170,7 +171,7 @@ class CampaignAdmin extends SilverStripeComponent {
       const extendedProps = Object.assign({}, props, {
         handleClick: (event) => {
           event.preventDefault();
-          window.ss.router.show(indexRoute);
+          router.show(indexRoute);
         },
       });
 
@@ -197,7 +198,7 @@ class CampaignAdmin extends SilverStripeComponent {
       const extendedProps = Object.assign({}, props, {
         handleClick: (event) => {
           event.preventDefault();
-          window.ss.router.show(indexRoute);
+          router.show(indexRoute);
         },
       });
 
@@ -230,7 +231,7 @@ class CampaignAdmin extends SilverStripeComponent {
               .replace(/:id\?/, record.ID)
               .replace(/:view\?/, 'show');
 
-            window.ss.router.show(path);
+            router.show(path);
           },
           handleEditRecord: (event, id) => {
             const path = campaignViewRoute
@@ -238,7 +239,7 @@ class CampaignAdmin extends SilverStripeComponent {
               .replace(/:id\?/, id)
               .replace(/:view\?/, 'edit');
 
-            window.ss.router.show(path);
+            router.show(path);
           },
         }),
       });
@@ -271,7 +272,7 @@ class CampaignAdmin extends SilverStripeComponent {
       .replace(/:id\?/, 0)
       .replace(/:view\?/, 'create');
 
-    window.ss.router.show(path);
+    router.show(path);
   }
 
 }
