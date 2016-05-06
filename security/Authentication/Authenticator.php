@@ -1,4 +1,12 @@
 <?php
+
+namespace SilverStripe\Security;
+
+use Controller;
+use Form;
+use Member;
+use Object;
+
 /**
  * Abstract base class for an authentication method
  *
@@ -9,14 +17,15 @@
  * @package framework
  * @subpackage security
  */
-abstract class Authenticator extends Object {
+abstract class Authenticator extends Object
+{
 
 	/**
-	 * This variable holds all authenticators that should be used
+	 * This variable holds all full namespaced authenticators that should be used
 	 *
 	 * @var array
 	 */
-	private static $authenticators = array('MemberAuthenticator');
+	private static $authenticators = array('SilverStripe\Security\MemberAuthenticator');
 
 	/**
 	 * Used to influence the order of authenticators on the login-screen
@@ -24,7 +33,7 @@ abstract class Authenticator extends Object {
 	 *
 	 * @var string
 	 */
-	private static $default_authenticator = 'MemberAuthenticator';
+	private static $default_authenticator = 'SilverStripe\Security\MemberAuthenticator';
 
 
 	/**
@@ -34,21 +43,25 @@ abstract class Authenticator extends Object {
 	 * @param Form $form Optional: If passed, better error messages can be
 	 *                             produced by using
 	 *                             {@link Form::sessionMessage()}
+	 *
 	 * @return bool|Member Returns FALSE if authentication fails, otherwise
 	 *                     the member object
 	 */
-	public static function authenticate($RAW_data, Form $form = null) {
+	public static function authenticate($RAW_data, Form $form = null)
+	{
 	}
 
 	/**
 	 * Method that creates the login form for this authentication method
 	 *
-	 * @param Controller The parent controller, necessary to create the
+	 * @param Controller $controller The parent controller, necessary to create the
 	 *                   appropriate form action tag
+	 *
 	 * @return Form Returns the login form to use with this authentication
 	 *              method
 	 */
-	public static function get_login_form(Controller $controller) {
+	public static function get_login_form(Controller $controller)
+	{
 	}
 
 	/**
@@ -56,7 +69,8 @@ abstract class Authenticator extends Object {
 	 *
 	 * @param Controller $controller
 	 */
-	public static function get_cms_login_form(Controller $controller) {
+	public static function get_cms_login_form(Controller $controller)
+	{
 	}
 
 	/**
@@ -64,7 +78,8 @@ abstract class Authenticator extends Object {
 	 *
 	 * @return bool
 	 */
-	public static function supports_cms() {
+	public static function supports_cms()
+	{
 		return false;
 	}
 
@@ -74,10 +89,12 @@ abstract class Authenticator extends Object {
 	 *
 	 * @return string Returns the name of the authentication method.
 	 */
-	public static function get_name() {
+	public static function get_name()
+	{
 	}
 
-	public static function register($authenticator) {
+	public static function register($authenticator)
+	{
 		self::register_authenticator($authenticator);
 	}
 
@@ -91,20 +108,24 @@ abstract class Authenticator extends Object {
 	 *
 	 * @param string $authenticator Name of the authenticator class to
 	 *                              register
+	 *
 	 * @return bool Returns TRUE on success, FALSE otherwise.
 	 */
-	public static function register_authenticator($authenticator) {
+	public static function register_authenticator($authenticator)
+	{
 		$authenticator = trim($authenticator);
 
-		if(class_exists($authenticator) == false)
+		if (class_exists($authenticator) === false) {
 			return false;
+		}
 
-		if(is_subclass_of($authenticator, 'Authenticator') == false)
+		if (is_subclass_of($authenticator, 'Authenticator') === false) {
 			return false;
+		}
 
-		if(in_array($authenticator, self::$authenticators) == false) {
-			if(call_user_func(array($authenticator, 'on_register')) === true) {
-				array_push(self::$authenticators, $authenticator);
+		if (in_array($authenticator, self::$authenticators, null) === false) {
+			if (call_user_func(array($authenticator, 'on_register')) === true) {
+				self::$authenticators[] = $authenticator;
 			} else {
 				return false;
 			}
@@ -113,7 +134,8 @@ abstract class Authenticator extends Object {
 		return true;
 	}
 
-	public static function unregister($authenticator) {
+	public static function unregister($authenticator)
+	{
 		self::unregister_authenticator($authenticator);
 	}
 
@@ -121,14 +143,17 @@ abstract class Authenticator extends Object {
 	 * Remove a previously registered authenticator
 	 *
 	 * @param string $authenticator Name of the authenticator class to register
+	 *
 	 * @return bool Returns TRUE on success, FALSE otherwise.
 	 */
-	public static function unregister_authenticator($authenticator) {
-		if(call_user_func(array($authenticator, 'on_unregister')) === true) {
-			if(in_array($authenticator, self::$authenticators)) {
-				unset(self::$authenticators[array_search($authenticator, self::$authenticators)]);
-			}
+	public static function unregister_authenticator($authenticator)
+	{
+		if (call_user_func(array($authenticator, 'on_unregister')) === true
+			&& in_array($authenticator, self::$authenticators, null)
+		) {
+			unset(self::$authenticators[array_search($authenticator, self::$authenticators, null)]);
 		}
+
 	}
 
 
@@ -136,11 +161,13 @@ abstract class Authenticator extends Object {
 	 * Check if a given authenticator is registered
 	 *
 	 * @param string $authenticator Name of the authenticator class to check
+	 *
 	 * @return bool Returns TRUE if the authenticator is registered, FALSE
 	 *              otherwise.
 	 */
-	public static function is_registered($authenticator) {
-		return in_array($authenticator, self::$authenticators);
+	public static function is_registered($authenticator)
+	{
+		return in_array($authenticator, self::$authenticators, null);
 	}
 
 
@@ -150,9 +177,10 @@ abstract class Authenticator extends Object {
 	 * @return array Returns an array with the class names of all registered
 	 *               authenticators.
 	 */
-	public static function get_authenticators() {
+	public static function get_authenticators()
+	{
 		// put default authenticator first (mainly for tab-order on loginform)
-		if($key = array_search(self::$default_authenticator,self::$authenticators)) {
+		if ($key = array_search(self::$default_authenticator, self::$authenticators, null)) {
 			unset(self::$authenticators[$key]);
 			array_unshift(self::$authenticators, self::$default_authenticator);
 		}
@@ -165,7 +193,8 @@ abstract class Authenticator extends Object {
 	 *
 	 * @param string
 	 */
-	public static function set_default_authenticator($authenticator) {
+	public static function set_default_authenticator($authenticator)
+	{
 		self::$default_authenticator = $authenticator;
 
 
@@ -174,7 +203,8 @@ abstract class Authenticator extends Object {
 	/**
 	 * @return string
 	 */
-	public static function get_default_authenticator() {
+	public static function get_default_authenticator()
+	{
 		return self::$default_authenticator;
 	}
 
@@ -190,7 +220,8 @@ abstract class Authenticator extends Object {
 	 *
 	 * @return bool Returns TRUE on success, FALSE otherwise.
 	 */
-	protected static function on_register() {
+	protected static function on_register()
+	{
 		return true;
 	}
 
@@ -199,7 +230,8 @@ abstract class Authenticator extends Object {
 	 *
 	 * @return bool
 	 */
-	protected static function on_unregister() {
+	protected static function on_unregister()
+	{
 		return true;
 	}
 }
