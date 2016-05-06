@@ -202,7 +202,7 @@ class SapphireTest extends PHPUnit_Framework_TestCase {
 		// Remove password validation
 		$this->originalMemberPasswordValidator = MemberSecurity::password_validator();
 		$this->originalRequirements = Requirements::backend();
-		Member::set_password_validator(null);
+		MemberSecurity::set_password_validator(null);
 		Config::inst()->update('Cookie', 'report_errors', false);
 
 		if(class_exists('RootURLController')) RootURLController::reset();
