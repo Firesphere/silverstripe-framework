@@ -1,4 +1,7 @@
 <?php
+use SilverStripe\Security\PasswordEncryptor;
+use SilverStripe\Security\PasswordEncryptor_Blowfish;
+
 class PasswordEncryptorTest extends SapphireTest {
 
 	/**

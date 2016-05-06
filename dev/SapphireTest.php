@@ -200,7 +200,7 @@ class SapphireTest extends PHPUnit_Framework_TestCase {
 		date_default_timezone_set('UTC');
 
 		// Remove password validation
-		$this->originalMemberPasswordValidator = Member::password_validator();
+		$this->originalMemberPasswordValidator = MemberSecurity::password_validator();
 		$this->originalRequirements = Requirements::backend();
 		Member::set_password_validator(null);
 		Config::inst()->update('Cookie', 'report_errors', false);
