@@ -46,6 +46,7 @@ class CMSSecurity extends Security
 			)
 		);
 	}
+	
 
 	public function Link($action = null)
 	{
