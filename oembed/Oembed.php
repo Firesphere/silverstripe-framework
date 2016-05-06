@@ -103,13 +103,14 @@ class Oembed implements ShortcodeHandler {
 	 */
 	protected static function autodiscover_from_url($url)
 	{
-		// Fetch the URL (cache for a week by default)
-		$service = new RestfulService($url, 60 * 60 * 24 * 7);
-		$body = $service->request();
-		if (!$body || $body->isError()) {
+		$service = new GuzzleHttp\Client();
+
+		$request = $service->request('GET', $url);
+		// Fetch from Oembed URL (cache for a week by default)
+		if(!$request || $request->getStatusCode() !== 200) {
 			return false;
 		}
-		$body = $body->getBody();
+		$body = $request->getBody();
 		return static::autodiscover_from_body($body);
 	}
 
@@ -283,15 +284,15 @@ class Oembed_Result extends ViewableData {
 		if($this->data !== false) {
 			return;
 		}
+		$service = new GuzzleHttp\Client();
 
+		$request = $service->request('GET', $this->url);
 		// Fetch from Oembed URL (cache for a week by default)
-		$service = new RestfulService($this->url, 60*60*24*7);
-		$body = $service->request();
-		if(!$body || $body->isError()) {
+		if(!$request || $request->getStatusCode() !== 200) {
 			$this->data = array();
 			return;
 		}
-		$body = $body->getBody();
+		$body = $request->getBody();
 		$data = json_decode($body, true);
 		if(!$data) {
 			// if the response is no valid JSON we might have received a binary stream to an image
