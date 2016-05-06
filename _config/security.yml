@@ -3,6 +3,8 @@ Injector:
     class: SilverStripe\Security\Security
   Authenticator:
     class: SilverStripe\Security\Authenticator
+  RandomGenerator:
+    class: SilverStripe\Security\RandomGenerator
 Security:
   login_url: "Security/login"
   logout_url: "Security/logout"
