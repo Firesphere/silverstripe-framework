@@ -124,7 +124,7 @@ class Oembed implements ShortcodeHandler {
 		if(!$response || $headers['http_code'] !== 200) {
 			return false;
 		}
-		$body = $response;		
+		$body = $response;
 		return static::autodiscover_from_body($body);
 	}
 
