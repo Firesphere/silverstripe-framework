@@ -1,24 +1,24 @@
 <?php
+
 /**
  * Represents a permission assigned to a group.
+ *
  * @package framework
  * @subpackage security
- *
- * @property string Code
- * @property int Arg
- * @property int Type
- *
- * @property int GroupID
- *
+ * @property string $Code
+ * @property string $Arg
+ * @property string $Type
+ * @property int $GroupID
  * @method Group Group()
  */
-class Permission extends DataObject implements TemplateGlobalProvider {
+class Permission extends DataObject implements TemplateGlobalProvider
+{
 
 	// the (1) after Type specifies the DB default value which is needed for
 	// upgrades from older SilverStripe versions
 	private static $db = array(
 		"Code" => "Varchar(255)",
-		"Arg" => "Int",
+		"Arg"  => "Int",
 		"Type" => "Int(1)"
 	);
 	private static $has_one = array(
@@ -89,6 +89,7 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	/**
 	 * a list of permission codes which doesn't appear in the Permission list
 	 * when make the {@link PermissionCheckboxSetField}
+	 *
 	 * @config
 	 * @var array;
 	 */
@@ -114,13 +115,15 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 *  will be checked for the current user
 	 * @param bool $strict Use "strict" checking (which means a permission
 	 *  will be granted if the key does not exist at all)?
+	 *
 	 * @return int|bool The ID of the permission record if the permission
 	 *  exists; FALSE otherwise. If "strict" checking is
 	 *  disabled, TRUE will be returned if the permission does not exist at all.
 	 */
-	public static function check($code, $arg = "any", $member = null, $strict = true) {
-		if(!$member) {
-			if(!Member::currentUserID()) {
+	public static function check($code, $arg = "any", $member = null, $strict = true)
+	{
+		if (!$member) {
+			if (!Member::currentUserID()) {
 				return false;
 			}
 			$member = Member::currentUserID();
@@ -137,9 +140,11 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 
 	/**
 	 * Flush the permission cache, for example if you have edited group membership or a permission record.
+	 *
 	 * @todo Call this whenever Group_Members is added to or removed from
 	 */
-	public static function flush_permission_cache() {
+	public static function flush_permission_cache()
+	{
 		self::$cache_permissions = array();
 	}
 
@@ -152,12 +157,14 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 * @param string $arg Optional argument (e.g. a permissions for a specific page)
 	 * @param bool $strict Use "strict" checking (which means a permission
 	 *  will be granted if the key does not exist at all)?
+	 *
 	 * @return int|bool The ID of the permission record if the permission
 	 *  exists; FALSE otherwise. If "strict" checking is
 	 *  disabled, TRUE will be returned if the permission does not exist at all.
 	 */
-	public static function checkMember($member, $code, $arg = "any", $strict = true) {
-		if(!$member) {
+	public static function checkMember($member, $code, $arg = "any", $strict = true)
+	{
+		if (!$member) {
 			$memberID = $member = Member::currentUserID();
 		} else {
 			$memberID = (is_object($member)) ? $member->ID : $member;
@@ -168,12 +175,12 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 		}
 
 		// Turn the code into an array as we may need to add other permsissions to the set we check
-		if(!is_array($code)) $code = array($code);
+		if (!is_array($code)) $code = array($code);
 
-		if($arg == 'any') {
+		if ($arg == 'any') {
 			$adminImpliesAll = (bool)Config::inst()->get('Permission', 'admin_implies_all');
 			// Cache the permissions in memory
-			if(!isset(self::$cache_permissions[$memberID])) {
+			if (!isset(self::$cache_permissions[$memberID])) {
 				self::$cache_permissions[$memberID] = self::permissions_for_member($memberID);
 			}
 			foreach ($code as $permCode) {
@@ -184,8 +191,7 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 							return true;
 						}
 					}
-				}
-				elseif (substr($permCode, 0, 11) === 'CMS_ACCESS_') {
+				} elseif (substr($permCode, 0, 11) === 'CMS_ACCESS_') {
 					//cms_access_leftandmain means access to all CMS areas
 					$code[] = 'CMS_ACCESS_LeftAndMain';
 					break;
@@ -193,7 +199,7 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 			}
 
 			// if ADMIN has all privileges, then we need to push that code in
-			if($adminImpliesAll) {
+			if ($adminImpliesAll) {
 				$code[] = "ADMIN";
 			}
 
@@ -205,18 +211,18 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 		$codeParams = is_array($code) ? $code : array($code);
 		$codeClause = DB::placeholders($codeParams);
 		$adminParams = (self::$admin_implies_all) ? array('ADMIN') : array();
-		$adminClause = (self::$admin_implies_all) ?  ", ?" : '';
+		$adminClause = (self::$admin_implies_all) ? ", ?" : '';
 
 		// The following code should only be used if you're not using the "any" arg.  This is kind
 		// of obselete functionality and could possibly be deprecated.
 		$groupParams = self::groupList($memberID);
-		if(empty($groupParams)) return false;
+		if (empty($groupParams)) return false;
 		$groupClause = DB::placeholders($groupParams);
 
 		// Arg component
 		$argClause = "";
 		$argParams = array();
-		switch($arg) {
+		switch ($arg) {
 			case "any":
 				break;
 			case "all":
@@ -224,14 +230,14 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 				$argParams = array(-1);
 				break;
 			default:
-				if(is_numeric($arg)) {
+				if (is_numeric($arg)) {
 					$argClause = "AND \"Arg\" IN (?, ?) ";
 					$argParams = array(-1, $arg);
 				} else {
 					user_error("Permission::checkMember: bad arg '$arg'", E_USER_ERROR);
 				}
 		}
-		$adminFilter = (Config::inst()->get('Permission', 'admin_implies_all')) ?  ",'ADMIN'" : '';
+		$adminFilter = (Config::inst()->get('Permission', 'admin_implies_all')) ? ",'ADMIN'" : '';
 
 		// Raw SQL for efficiency
 		$permission = DB::prepared_query(
@@ -252,10 +258,10 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 			)
 		)->value();
 
-		if($permission) return $permission;
+		if ($permission) return $permission;
 
 		// Strict checking disabled?
-		if(!Config::inst()->get('Permission', 'strict_checking') || !$strict) {
+		if (!Config::inst()->get('Permission', 'strict_checking') || !$strict) {
 			$hasPermission = DB::prepared_query(
 				"SELECT COUNT(*)
 				FROM \"Permission\"
@@ -266,7 +272,7 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 				array_merge($codeParams, array(self::GRANT_PERMISSION))
 			)->value();
 
-			if(!$hasPermission) return;
+			if (!$hasPermission) return;
 		}
 
 		return false;
@@ -277,10 +283,11 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 *
 	 * @return array
 	 */
-	public static function permissions_for_member($memberID) {
+	public static function permissions_for_member($memberID)
+	{
 		$groupList = self::groupList($memberID);
 
-		if($groupList) {
+		if ($groupList) {
 			$groupCSV = implode(", ", $groupList);
 
 			$allowed = array_unique(DB::query("
@@ -318,20 +325,22 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 *
 	 * @param int $memberID The ID of the member. Leave blank for the current
 	 *                      member.
+	 *
 	 * @return array Returns a list of group IDs to which the member belongs
 	 *               to or NULL.
 	 */
-	public static function groupList($memberID = null) {
+	public static function groupList($memberID = null)
+	{
 		// Default to current member, with session-caching
-		if(!$memberID) {
+		if (!$memberID) {
 			$member = Member::currentUser();
-			if($member && isset($_SESSION['Permission_groupList'][$member->ID]))
+			if ($member && isset($_SESSION['Permission_groupList'][$member->ID]))
 				return $_SESSION['Permission_groupList'][$member->ID];
 		} else {
 			$member = DataObject::get_by_id("Member", $memberID);
 		}
 
-		if($member) {
+		if ($member) {
 			// Build a list of the IDs of the groups.  Most of the heavy lifting
 			// is done by Member::Groups
 			// NOTE: This isn't effecient; but it's called once per session so
@@ -339,14 +348,14 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 			$groups = $member->Groups();
 			$groupList = array();
 
-			if($groups) {
-				foreach($groups as $group)
+			if ($groups) {
+				foreach ($groups as $group)
 					$groupList[] = $group->ID;
 			}
 
 
 			// Session caching
-			if(!$memberID) {
+			if (!$memberID) {
 				$_SESSION['Permission_groupList'][$member->ID] = $groupList;
 			}
 
@@ -361,30 +370,33 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 * @param int $groupID The ID of the group
 	 * @param string $code The permission code
 	 * @param string Optional: The permission argument (e.g. a page ID).
+	 *
 	 * @returns Permission Returns the new permission object.
 	 */
-	public static function grant($groupID, $code, $arg = "any") {
+	public static function grant($groupID, $code, $arg = "any")
+	{
 		$perm = new Permission();
 		$perm->GroupID = $groupID;
 		$perm->Code = $code;
 		$perm->Type = self::GRANT_PERMISSION;
 
 		// Arg component
-		switch($arg) {
+		switch ($arg) {
 			case "any":
 				break;
 			case "all":
 				$perm->Arg = -1;
 			default:
-				if(is_numeric($arg)) {
+				if (is_numeric($arg)) {
 					$perm->Arg = $arg;
 				} else {
 					user_error("Permission::checkMember: bad arg '$arg'",
-										E_USER_ERROR);
+						E_USER_ERROR);
 				}
 		}
 
 		$perm->write();
+
 		return $perm;
 	}
 
@@ -395,30 +407,33 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 * @param int $groupID The ID of the group
 	 * @param string $code The permission code
 	 * @param string Optional: The permission argument (e.g. a page ID).
+	 *
 	 * @returns Permission Returns the new permission object.
 	 */
-	public static function deny($groupID, $code, $arg = "any") {
+	public static function deny($groupID, $code, $arg = "any")
+	{
 		$perm = new Permission();
 		$perm->GroupID = $groupID;
 		$perm->Code = $code;
 		$perm->Type = self::DENY_PERMISSION;
 
 		// Arg component
-		switch($arg) {
+		switch ($arg) {
 			case "any":
 				break;
 			case "all":
 				$perm->Arg = -1;
 			default:
-				if(is_numeric($arg)) {
+				if (is_numeric($arg)) {
 					$perm->Arg = $arg;
 				} else {
 					user_error("Permission::checkMember: bad arg '$arg'",
-										E_USER_ERROR);
+						E_USER_ERROR);
 				}
 		}
 
 		$perm->write();
+
 		return $perm;
 	}
 
@@ -426,22 +441,24 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 * Returns all members for a specific permission.
 	 *
 	 * @param $code String|array Either a single permission code, or a list of permission codes
+	 *
 	 * @return SS_List Returns a set of member that have the specified
 	 *                       permission.
 	 */
-	public static function get_members_by_permission($code) {
+	public static function get_members_by_permission($code)
+	{
 		$toplevelGroups = self::get_groups_by_permission($code);
 		if (!$toplevelGroups) return new ArrayList();
 
 		$groupIDs = array();
-		foreach($toplevelGroups as $group) {
+		foreach ($toplevelGroups as $group) {
 			$familyIDs = $group->collateFamilyIDs();
-			if(is_array($familyIDs)) {
+			if (is_array($familyIDs)) {
 				$groupIDs = array_merge($groupIDs, array_values($familyIDs));
 			}
 		}
 
-		if(empty($groupIDs)) return new ArrayList();
+		if (empty($groupIDs)) return new ArrayList();
 
 		$groupClause = DB::placeholders($groupIDs);
 		$members = Member::get()
@@ -454,10 +471,14 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 
 	/**
 	 * Return all of the groups that have one of the given permission codes
+	 *
+	 * @todo Oh boy this query is ugly!
 	 * @param $codes array|string Either a single permission code, or an array of permission codes
+	 *
 	 * @return SS_List The matching group objects
 	 */
-	public static function get_groups_by_permission($codes) {
+	public static function get_groups_by_permission($codes)
+	{
 		$codeParams = is_array($codes) ? $codes : array($codes);
 		$codeClause = DB::placeholders($codeParams);
 
@@ -478,15 +499,17 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 * Get a list of all available permission codes, both defined through the
 	 * {@link PermissionProvider} interface, and all not explicitly defined codes existing
 	 * as a {@link Permission} database record. By default, the results are
-	 * grouped as denoted by {@link Permission_Group}.
+	 * grouped as denoted by {@link PermissionGroup}.
 	 *
 	 * @param bool $grouped Group results into an array of permission groups.
+	 *
 	 * @return array Returns an array of all available permission codes. The
 	 *  array indicies are the permission codes as used in
 	 *  {@link Permission::check()}. The value is a description
 	 *  suitable for using in an interface.
 	 */
-	public static function get_codes($grouped = true) {
+	public static function get_codes($grouped = true)
+	{
 		$classes = ClassInfo::implementorsOf('PermissionProvider');
 
 		$allCodes = array();
@@ -500,13 +523,13 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 			'sort' => 100000
 		);
 
-		if($classes) foreach($classes as $class) {
+		if ($classes) foreach ($classes as $class) {
 			$SNG = singleton($class);
-			if($SNG instanceof TestOnly) continue;
+			if ($SNG instanceof TestOnly) continue;
 
 			$someCodes = $SNG->providePermissions();
-			if($someCodes) {
-				foreach($someCodes as $k => $v) {
+			if ($someCodes) {
+				foreach ($someCodes as $k => $v) {
 					if (is_array($v)) {
 						// There must be a category and name key.
 						if (!isset($v['category'])) user_error("The permission $k must have a category key",
@@ -534,11 +557,11 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 		}
 
 		$flatCodeArray = array();
-		foreach($allCodes as $category) foreach($category as $code => $permission) $flatCodeArray[] = $code;
+		foreach ($allCodes as $category) foreach ($category as $code => $permission) $flatCodeArray[] = $code;
 		$otherPerms = DB::query("SELECT DISTINCT \"Code\" From \"Permission\" WHERE \"Code\" != ''")->column();
 
-		if($otherPerms) foreach($otherPerms as $otherPerm) {
-			if(!in_array($otherPerm, $flatCodeArray))
+		if ($otherPerms) foreach ($otherPerms as $otherPerm) {
+			if (!in_array($otherPerm, $flatCodeArray))
 				$allCodes['Other'][$otherPerm] = array(
 					'name' => $otherPerm,
 					'help' => null,
@@ -547,13 +570,13 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 		}
 
 		// Don't let people hijack ADMIN rights
-		if(!Permission::check("ADMIN")) unset($allCodes['ADMIN']);
+		if (!Permission::check("ADMIN")) unset($allCodes['ADMIN']);
 
 		ksort($allCodes);
 
 		$returnCodes = array();
-		foreach($allCodes as $category => $permissions) {
-			if($grouped) {
+		foreach ($allCodes as $category => $permissions) {
+			if ($grouped) {
 				uasort($permissions, array(__CLASS__, 'sort_permissions'));
 				$returnCodes[$category] = $permissions;
 			} else {
@@ -568,7 +591,8 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 * Sort permissions based on their sort value, or name
 	 *
 	 */
-	public static function sort_permissions($a, $b) {
+	public static function sort_permissions($a, $b)
+	{
 		if ($a['sort'] == $b['sort']) {
 			// Same sort value, do alpha instead
 			return strcmp($a['name'], $b['name']);
@@ -582,11 +606,14 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 * add a permission represented by the $code to the {@link slef::$hidden_permissions} list
 	 *
 	 * @deprecated 4.0 Use "Permission.hidden_permissions" config setting instead
+	 *
 	 * @param $code string - the permissions code
+	 *
 	 * @return void
 	 */
-	public static function add_to_hidden_permissions($code){
-		if(is_string($codes)) $codes = array($codes);
+	public static function add_to_hidden_permissions($code)
+	{
+		if (is_string($codes)) $codes = array($codes);
 		Deprecation::notice('4.0', 'Use "Permission.hidden_permissions" config setting instead');
 		Config::inst()->update('Permission', 'hidden_permissions', $codes);
 	}
@@ -595,11 +622,14 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 * remove a permission represented by the $code from the {@link slef::$hidden_permissions} list
 	 *
 	 * @deprecated 4.0 Use "Permission.hidden_permissions" config setting instead
+	 *
 	 * @param $code string - the permissions code
+	 *
 	 * @return void
 	 */
-	public static function remove_from_hidden_permissions($code){
-		if(is_string($codes)) $codes = array($codes);
+	public static function remove_from_hidden_permissions($code)
+	{
+		if (is_string($codes)) $codes = array($codes);
 		Deprecation::notice('4.0', 'Use "Permission.hidden_permissions" config setting instead');
 		Config::inst()->remove('Permission', 'hidden_permissions', $codes);
 	}
@@ -611,10 +641,12 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 * treated as permissions.
 	 *
 	 * @deprecated 4.0 Use "Permission.declared_permissions" config setting instead
+	 *
 	 * @param array $permArray A (possibly nested) array of permissions to
 	 *                         declare for the system.
 	 */
-	public static function declare_permissions($permArray) {
+	public static function declare_permissions($permArray)
+	{
 		Deprecation::notice('4.0', 'Use "Permission.declared_permissions" config setting instead');
 		self::config()->declared_permissions = $permArray;
 	}
@@ -625,17 +657,18 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 *
 	 * @return array Linear list of declared permissions in the system.
 	 */
-	public static function get_declared_permissions_list() {
-		if(!self::$declared_permissions)
+	public static function get_declared_permissions_list()
+	{
+		if (!self::$declared_permissions)
 			return null;
 
-		if(self::$declared_permissions_list)
+		if (self::$declared_permissions_list)
 			return self::$declared_permissions_list;
 
 		self::$declared_permissions_list = array();
 
 		self::traverse_declared_permissions(self::$declared_permissions,
-																				self::$declared_permissions_list);
+			self::$declared_permissions_list);
 
 		return self::$declared_permissions_list;
 	}
@@ -644,11 +677,14 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 * Look up the human-readable title for the permission as defined by <code>Permission::declare_permissions</code>
 	 *
 	 * @param $perm Permission code
+	 *
 	 * @return Label for the given permission, or the permission itself if the label doesn't exist
 	 */
-	public static function get_label_for_permission($perm) {
+	public static function get_label_for_permission($perm)
+	{
 		$list = self::get_declared_permissions_list();
-		if(array_key_exists($perm, $list)) return $list[$perm];
+		if (array_key_exists($perm, $list)) return $list[$perm];
+
 		return $perm;
 	}
 
@@ -660,12 +696,13 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 	 * @param $list List of permissions in the structure. The result will be
 	 *              written to this array.
 	 */
-	protected static function traverse_declared_permissions($declared, &$list) {
-		if(!is_array($declared))
+	protected static function traverse_declared_permissions($declared, &$list)
+	{
+		if (!is_array($declared))
 			return;
 
-		foreach($declared as $perm => $value) {
-			if($value instanceof Permission_Group) {
+		foreach ($declared as $perm => $value) {
+			if ($value instanceof PermissionGroup) {
 				$list[] = $value->getName();
 				self::traverse_declared_permissions($value->getPermissions(), $list);
 			} else {
@@ -674,83 +711,19 @@ class Permission extends DataObject implements TemplateGlobalProvider {
 		}
 	}
 
-	public function onBeforeWrite() {
+	public function onBeforeWrite()
+	{
 		parent::onBeforeWrite();
 
 		// Just in case we've altered someone's permissions
 		Permission::flush_permission_cache();
 	}
 
-	public static function get_template_global_variables() {
+	public static function get_template_global_variables()
+	{
 		return array(
 			'HasPerm' => 'check'
 		);
-	}
-}
-
-
-/**
- * Permission_Group class
- *
- * This class is used to group permissions together for showing on an
- * interface.
- * @package framework
- * @subpackage security
- */
-class Permission_Group {
-
-	/**
-	 * Name of the permission group (can be used as label in an interface)
-	 * @var string
-	 */
-	protected $name;
-
-	/**
-	 * Associative array of permissions in this permission group. The array
-	 * indicies are the permission codes as used in
-	 * {@link Permission::check()}. The value is suitable for using in an
-	 * interface.
-	 * @var string
-	 */
-	protected $permissions = array();
-
-
-	/**
-	 * Constructor
-	 *
-	 * @param string $name Text that could be used as label used in an
-	 *                     interface
-	 * @param array $permissions Associative array of permissions in this
-	 *                           permission group. The array indicies are the
-	 *                           permission codes as used in
-	 *                           {@link Permission::check()}. The value is
-	 *                           suitable for using in an interface.
-	 */
-	public function __construct($name, $permissions) {
-		$this->name = $name;
-		$this->permissions = $permissions;
-	}
-
-	/**
-	 * Get the name of the permission group
-	 *
-	 * @return string Name (label) of the permission group
-	 */
-	public function getName() {
-		return $this->name;
-	}
-
-
-	/**
-	 * Get permissions
-	 *
-	 * @return array Associative array of permissions in this permission
-	 *               group. The array indicies are the permission codes as
-	 *               used in {@link Permission::check()}. The value is
-	 *               suitable for using in an interface.
-	 */
-	public function getPermissions() {
-		return $this->permissions;
 	}
 }
 

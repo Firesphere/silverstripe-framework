@@ -1,8 +1,18 @@
 <?php
+
+namespace SilverStripe\Security;
+
 /**
  * @package framework
  * @subpackage security
  */
+use Controller;
+use FieldList;
+use HiddenField;
+use Object;
+use Session;
+use SS_HTTPRequest;
+use TemplateGlobalProvider;
 
 /**
  * Cross Site Request Forgery (CSRF) protection for the {@link Form} class and other GET links.
@@ -18,17 +28,18 @@
  *
  * <code>
  * class MyController extends Controller {
- * 	function mygetaction($request) {
- * 		if(!SecurityToken::inst()->checkRequest($request)) return $this->httpError(400);
+ *    function mygetaction($request) {
+ *        if(!SecurityToken::inst()->checkRequest($request)) return $this->httpError(400);
  *
- * 		// valid action logic ...
- * 	}
+ *        // valid action logic ...
+ *    }
  * }
  * </code>
  *
  * @todo Make token name form specific for additional forgery protection.
  */
-class SecurityToken extends Object implements TemplateGlobalProvider {
+class SecurityToken extends Object implements TemplateGlobalProvider
+{
 
 	/**
 	 * @var String
@@ -38,7 +49,7 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	/**
 	 * @var SecurityToken
 	 */
-	protected static $inst = null;
+	protected static $inst;
 
 	/**
 	 * @var boolean
@@ -48,13 +59,14 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	/**
 	 * @var String $name
 	 */
-	protected $name = null;
+	protected $name;
 
 	/**
 	 * @param $name
 	 */
-	public function __construct($name = null) {
-		$this->name = ($name) ? $name : self::get_default_name();
+	public function __construct($name = null)
+	{
+		$this->name = $name ?: self::get_default_name();
 		parent::__construct();
 	}
 
@@ -63,8 +75,11 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	 *
 	 * @return SecurityToken
 	 */
-	public static function inst() {
-		if(!self::$inst) self::$inst = new SecurityToken();
+	public static function inst()
+	{
+		if (!self::$inst) {
+			self::$inst = SecurityToken::create();
+		}
 
 		return self::$inst;
 	}
@@ -73,7 +88,8 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	 * Globally disable the token (override with {@link NullSecurityToken})
 	 * implementation. Note: Does not apply for
 	 */
-	public static function disable() {
+	public static function disable()
+	{
 		self::$enabled = false;
 		self::$inst = new NullSecurityToken();
 	}
@@ -81,7 +97,8 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	/**
 	 * Globally enable tokens that have been previously disabled through {@link disable}.
 	 */
-	public static function enable() {
+	public static function enable()
+	{
 		self::$enabled = true;
 		self::$inst = new SecurityToken();
 	}
@@ -89,30 +106,38 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	/**
 	 * @return boolean
 	 */
-	public static function is_enabled() {
+	public static function is_enabled()
+	{
 		return self::$enabled;
 	}
 
 	/**
 	 * @return String
 	 */
-	public static function get_default_name() {
+	public static function get_default_name()
+	{
 		return self::$default_name;
 	}
 
 	/**
 	 * Returns the value of an the global SecurityToken in the current session
+	 *
 	 * @return int
 	 */
-	public static function getSecurityID() {
+	public static function getSecurityID()
+	{
 		$token = SecurityToken::inst();
+
 		return $token->getValue();
 	}
 
 	/**
+	 * @param $name
+	 *
 	 * @return String
 	 */
-	public function setName($name) {
+	public function setName($name)
+	{
 		$val = $this->getValue();
 		$this->name = $name;
 		$this->setValue($val);
@@ -121,18 +146,20 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	/**
 	 * @return String
 	 */
-	public function getName() {
+	public function getName()
+	{
 		return $this->name;
 	}
 
 	/**
 	 * @return String
 	 */
-	public function getValue() {
+	public function getValue()
+	{
 		$value = Session::get($this->getName());
 
 		// only regenerate if the token isn't already set in the session
-		if(!$value) {
+		if (!$value) {
 			$value = $this->generate();
 			$this->setValue($value);
 		}
@@ -143,14 +170,16 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	/**
 	 * @param String $val
 	 */
-	public function setValue($val) {
+	public function setValue($val)
+	{
 		Session::set($this->getName(), $val);
 	}
 
 	/**
 	 * Reset the token to a new value.
 	 */
-	public function reset() {
+	public function reset()
+	{
 		$this->setValue($this->generate());
 	}
 
@@ -164,16 +193,19 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	 * Typically you'll want to check {@link Form->securityTokenEnabled()} before calling this method.
 	 *
 	 * @param String $compare
+	 *
 	 * @return Boolean
 	 */
-	public function check($compare) {
-		return ($compare && $this->getValue() && $compare == $this->getValue());
+	public function check($compare)
+	{
+		return ($compare && $this->getValue() && $compare === $this->getValue());
 	}
 
 	/**
 	 * See {@link check()}.
 	 *
 	 * @param SS_HTTPRequest $request
+<<<<<<< 352552fae227a9a1a266302d01d9b69082bcceef
 	 * @return bool
 	 */
 	public function checkRequest($request) {
@@ -196,6 +228,14 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 
 		// Get from request var
 		return $request->requestVar($name);
+=======
+	 *
+	 * @return Boolean
+	 */
+	public function checkRequest($request)
+	{
+		return $this->check($request->requestVar($this->getName()));
+>>>>>>> Security to namespacing and refactor.
 	}
 
 	/**
@@ -204,12 +244,15 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	 * care of this yourself.
 	 *
 	 * @param FieldList $fieldset
+	 *
 	 * @return HiddenField|false
 	 */
-	public function updateFieldSet(&$fieldset) {
-		if(!$fieldset->fieldByName($this->getName())) {
+	public function updateFieldSet(&$fieldset)
+	{
+		if (!$fieldset->fieldByName($this->getName())) {
 			$field = new HiddenField($this->getName(), null, $this->getValue());
 			$fieldset->push($field);
+
 			return $field;
 		} else {
 			return false;
@@ -218,9 +261,11 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 
 	/**
 	 * @param String $url
+	 *
 	 * @return String
 	 */
-	public function addToUrl($url) {
+	public function addToUrl($url)
+	{
 		return Controller::join_links($url, sprintf('?%s=%s', $this->getName(), $this->getValue()));
 	}
 
@@ -234,7 +279,8 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	 *
 	 * @return boolean
 	 */
-	public function isEnabled() {
+	public function isEnabled()
+	{
 		return !($this instanceof NullSecurityToken);
 	}
 
@@ -243,78 +289,23 @@ class SecurityToken extends Object implements TemplateGlobalProvider {
 	 *
 	 * @return String
 	 */
-	protected function generate() {
+	protected function generate()
+	{
 		$generator = new RandomGenerator();
+
 		return $generator->randomToken('sha1');
 	}
 
-	public static function get_template_global_variables() {
+	/**
+	 * @inheritdoc Add the securityID tokens
+	 * @return array
+	 */
+	/** @noinspection InheritDocInspection */
+	public static function get_template_global_variables()
+	{
 		return array(
 			'getSecurityID',
 			'SecurityID' => 'getSecurityID'
 		);
-	}
-}
-
-/**
- * Specialized subclass for disabled security tokens - always returns
- * TRUE for token checks. Use through {@link SecurityToken::disable()}.
- */
-class NullSecurityToken extends SecurityToken {
-
-	/**
-	 * @param String
-	 * @return boolean
-	 */
-	public function check($compare) {
-		return true;
-	}
-
-	/**
-	 * @param SS_HTTPRequest $request
-	 * @return Boolean
-	 */
-	public function checkRequest($request) {
-		return true;
-	}
-
-	/**
-	 * @param FieldList $fieldset
-	 * @return false
-	 */
-	public function updateFieldSet(&$fieldset) {
-		// Remove, in case it was added beforehand
-		$fieldset->removeByName($this->getName());
-
-		return false;
-	}
-
-	/**
-	 * @param String $url
-	 * @return String
-	 */
-	public function addToUrl($url) {
-		return $url;
-	}
-
-	/**
-	 * @return String
-	 */
-	public function getValue() {
-		return null;
-	}
-
-	/**
-	 * @param String $val
-	 */
-	public function setValue($val) {
-		// no-op
-	}
-
-	/**
-	 * @return String
-	 */
-	public function generate() {
-		return null;
 	}
 }

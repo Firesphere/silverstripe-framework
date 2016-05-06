@@ -1,4 +1,30 @@
 <?php
+namespace SilverStripe\Security;
+
+use ArrayData;
+use Config;
+use Convert;
+use Deprecation;
+use FieldList;
+use Form;
+use GridField;
+use GridFieldButtonRow;
+use GridFieldConfig_RecordEditor;
+use GridFieldExportButton;
+use Group;
+use HeaderField;
+use HiddenField;
+use Injector;
+use LeftAndMain;
+use LiteralField;
+use Member;
+use Permission;
+use PermissionProvider;
+use PermissionRole;
+use Requirements;
+use Tab;
+use TabSet;
+
 
 /**
  * Security section of the CMS
@@ -12,7 +38,7 @@ class SecurityAdmin extends LeftAndMain implements PermissionProvider {
 
 	private static $url_rule = '/$Action/$ID/$OtherID';
 
-	private static $menu_title = 'Security';
+	private static $menu_title = 'Users';
 
 	private static $tree_class = 'Group';
 
@@ -55,7 +81,13 @@ class SecurityAdmin extends LeftAndMain implements PermissionProvider {
 		return $this->index($request);
 	}
 
-	public function getEditForm($id = null, $fields = null) {
+	/**
+	 * @param null $id
+	 * @param null $fields
+	 *
+	 * @return \Form
+     */
+    public function getEditForm($id = null, $fields = null) {
 		// TODO Duplicate record fetching (see parent implementation)
 		if(!$id) $id = $this->currentPageID();
 		$form = parent::getEditForm($id);
@@ -167,11 +199,11 @@ class SecurityAdmin extends LeftAndMain implements PermissionProvider {
 		}
 
 		$actionParam = $this->getRequest()->param('Action');
-		if($actionParam == 'groups') {
+		if($actionParam === 'groups') {
 			$groupsTab->addExtraClass('ui-state-active');
-		} elseif($actionParam == 'users') {
+		} elseif($actionParam === 'users') {
 			$usersTab->addExtraClass('ui-state-active');
-		} elseif($actionParam == 'roles') {
+		} elseif($actionParam === 'roles') {
 			$rolesTab->addExtraClass('ui-state-active');
 		}
 
@@ -262,7 +294,12 @@ class SecurityAdmin extends LeftAndMain implements PermissionProvider {
 		return false;
 	}
 
-	public function Breadcrumbs($unlinked = false) {
+	/**
+	 * @param bool $unlinked
+	 *
+	 * @return \ArrayList
+     */
+    public function Breadcrumbs($unlinked = false) {
 		$crumbs = parent::Breadcrumbs($unlinked);
 
 		// Name root breadcrumb based on which record is edited,
@@ -297,7 +334,7 @@ class SecurityAdmin extends LeftAndMain implements PermissionProvider {
 	}
 
 	public function providePermissions() {
-		$title = $this->menu_title();
+		$title = _t("SecurityAdmin.MENUTITLE", LeftAndMain::menu_title_for_class($this->class));
 		return array(
 			"CMS_ACCESS_SecurityAdmin" => array(
 				'name' => _t('CMSMain.ACCESS', "Access to '{title}' section", array('title' => $title)),

@@ -135,7 +135,8 @@ if(defined('SS_DEFAULT_ADMIN_USERNAME')) {
 			. "http://doc.silverstripe.org/framework/en/topics/environment-management for more information",
 			E_USER_ERROR);
 	}
-	Security::setDefaultAdmin(SS_DEFAULT_ADMIN_USERNAME, SS_DEFAULT_ADMIN_PASSWORD);
+	Config::inst()->update('Security', 'default_username', SS_DEFAULT_ADMIN_USERNAME);
+	Config::inst()->update('Security', 'default_password', SS_DEFAULT_ADMIN_PASSWORD);
 }
 if(defined('SS_USE_BASIC_AUTH') && SS_USE_BASIC_AUTH) {
 	Config::inst()->update('BasicAuth', 'entire_site_protected', SS_USE_BASIC_AUTH);

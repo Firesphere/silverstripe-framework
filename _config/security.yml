@@ -1,0 +1,28 @@
+Injector:
+  Security:
+    class: SilverStripe\Security\Security
+  Authenticator:
+    class: SilverStripe\Security\Authenticator
+Security:
+  login_url: "Security/login"
+  logout_url: "Security/logout"
+  base_url: "Security"
+  template_main: Page
+  template: BlankPage
+  unique_identifier_field: Email
+  word_list: "./wordlist.txt"
+  remember_username: true
+  autologin_enabled: true
+  default_login_dest: "admin/pages"
+  password_encryption_algorithm: blowfish
+  ignore_disallowed_actions: false
+  strict_path_checking: false
+  forgot_password_url: "Security/lostpassword"
+  sent_password_url: "Security/passwordsent"
+  change_password_url: "Security/changepassword"
+  login_recording: false
+  block_insecure_passwords: true
+Authenticator:
+  authenticators:
+    - 'SilverStripe\Security\MemberAuthenticator'
+  default_authenticator: 'SilverStripe\Security\MemberAuthenticator'

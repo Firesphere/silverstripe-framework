@@ -1,31 +1,29 @@
 <?php
+
 /**
  * Record all login attempts through the {@link LoginForm} object.
+ * 
  * This behaviour is disabled by default.
- *
+ * 
  * Enable through {@link Security::$login_recording}.
- *
+ * 
  * Caution: Please make sure that enabling logging
  * complies with your privacy standards. We're logging
  * username and IP.
  *
- * @package framework
- * @subpackage security
- *
- * @property string Email Email address used for login attempt
- * @property string Status Status of the login attempt, either 'Success' or 'Failure'
- * @property string IP IP address of user attempting to login
- *
- * @property int MemberID ID of the Member, only if Member with Email exists
- *
- * @method Member Member() Member object of the user trying to log in, only if Member with Email exists
+ * @property string $Email
+ * @property string $Status
+ * @property string $IP
+ * @property int $MemberID
+ * @method Member Member()
  */
-class LoginAttempt extends DataObject {
+class LoginAttempt extends DataObject
+{
 
 	private static $db = array(
-		'Email' => 'Varchar(255)',
+		'Email'  => 'Varchar(255)',
 		'Status' => "Enum('Success,Failure')",
-		'IP' => 'Varchar(255)',
+		'IP'     => 'Varchar(255)',
 	);
 
 	private static $has_one = array(
@@ -42,8 +40,10 @@ class LoginAttempt extends DataObject {
 	 *
 	 * @param boolean $includerelations a boolean value to indicate if the labels returned include relation fields
 	 *
+	 * @return array|string
 	 */
-	public function fieldLabels($includerelations = true) {
+	public function fieldLabels($includerelations = true)
+	{
 		$labels = parent::fieldLabels($includerelations);
 		$labels['Email'] = _t('LoginAttempt.Email', 'Email Address');
 		$labels['Status'] = _t('LoginAttempt.Status', 'Status');

@@ -1,4 +1,19 @@
 <?php
+namespace SilverStripe\Security;
+
+use ChangePasswordForm;
+use CheckboxField;
+use Controller;
+use Convert;
+use FieldList;
+use FormAction;
+use HiddenField;
+use LiteralField;
+use LoginForm;
+use Member;
+use PasswordField;
+use Session;
+use SS_HTTPResponse;
 
 /**
  * Provides the in-cms session re-authentication form for the "member" authenticator
@@ -6,7 +21,8 @@
  * @package framework
  * @subpackage security
  */
-class CMSMemberLoginForm extends LoginForm {
+class CMSMemberLoginForm extends LoginForm
+{
 
 	protected $authenticator_class = 'MemberAuthenticator';
 
@@ -14,13 +30,16 @@ class CMSMemberLoginForm extends LoginForm {
 	 * Get link to use for external security actions
 	 *
 	 * @param string $action Action
+	 *
 	 * @return string
 	 */
-	public function getExternalLink($action = null) {
+	public function getExternalLink($action = null)
+	{
 		return Security::create()->Link($action);
 	}
 
-	public function __construct(Controller $controller, $name) {
+	public function __construct(Controller $controller, $name)
+	{
 		// Set default fields
 		$fields = new FieldList(
 			HiddenField::create("AuthenticationMethod", null, $this->authenticator_class, $this),
@@ -36,7 +55,7 @@ class CMSMemberLoginForm extends LoginForm {
 			)
 		);
 
-		if(Security::config()->autologin_enabled) {
+		if (Security::config()->autologin_enabled) {
 			$fields->push(new CheckboxField(
 				"Remember",
 				_t('Member.REMEMBERME', "Remember me next time?")
@@ -45,8 +64,8 @@ class CMSMemberLoginForm extends LoginForm {
 
 		// Determine returnurl to redirect to parent page
 		$logoutLink = $this->getExternalLink('logout');
-		if($returnURL = $controller->getRequest()->requestVar('BackURL')) {
-			$logoutLink = Controller::join_links($logoutLink,  '?BackURL='.urlencode($returnURL));
+		if ($returnURL = $controller->getRequest()->requestVar('BackURL')) {
+			$logoutLink = Controller::join_links($logoutLink, '?BackURL=' . urlencode($returnURL));
 		}
 
 		// Make actions
@@ -68,15 +87,18 @@ class CMSMemberLoginForm extends LoginForm {
 	/**
 	 * Try to authenticate the user
 	 *
-	 * @param array Submitted data
+	 * @param array $data Submitted data
+	 *
 	 * @return Member Returns the member object on successful authentication
 	 *                or NULL on failure.
 	 */
-	public function performLogin($data) {
+	public function performLogin($data)
+	{
 		$authenticator = $this->authenticator_class;
 		$member = $authenticator::authenticate($data, $this);
-		if($member) {
+		if ($member) {
 			$member->LogIn(isset($data['Remember']));
+
 			return $member;
 		}
 
@@ -89,16 +111,20 @@ class CMSMemberLoginForm extends LoginForm {
 	 * This method is called when the user clicks on "Log in"
 	 *
 	 * @param array $data Submitted data
+	 *
+	 * @return mixed
 	 */
-	public function dologin($data) {
-		if($this->performLogin($data)) {
+	public function dologin($data)
+	{
+		if ($this->performLogin($data)) {
 			$this->logInUserAndRedirect($data);
 		} else {
 			// Find best url to redirect back to
 			$request = $this->controller->getRequest();
 			$url = $request->getHeader('X-Backurl')
 				?: $request->getHeader('Referer')
-				?: $this->controller->Link('login');
+					?: $this->controller->Link('login');
+
 			return $this->controller->redirect($url);
 		}
 	}
@@ -108,7 +134,8 @@ class CMSMemberLoginForm extends LoginForm {
 	 *
 	 * @return SS_HTTPResponse
 	 */
-	protected function redirectToChangePassword() {
+	protected function redirectToChangePassword()
+	{
 		// Since this form is loaded via an iframe, this redirect must be performed via javascript
 		$changePasswordForm = new ChangePasswordForm($this->controller, 'ChangePasswordForm');
 		$changePasswordForm->sessionMessage(
@@ -118,9 +145,9 @@ class CMSMemberLoginForm extends LoginForm {
 
 		// Get redirect url
 		$changePasswordURL = $this->getExternalLink('changepassword');
-		if($backURL = $this->controller->getRequest()->requestVar('BackURL')) {
+		if ($backURL = $this->controller->getRequest()->requestVar('BackURL')) {
 			Session::set('BackURL', $backURL);
-			$changePasswordURL = Controller::join_links($changePasswordURL,'?BackURL=' . urlencode($backURL));
+			$changePasswordURL = Controller::join_links($changePasswordURL, '?BackURL=' . urlencode($backURL));
 		}
 		$changePasswordURLATT = Convert::raw2att($changePasswordURL);
 		$changePasswordURLJS = Convert::raw2js($changePasswordURL);
@@ -143,6 +170,7 @@ setTimeout(function(){top.location.href = "$changePasswordURLJS";}, 0);
 </body></html>
 PHP
 		);
+
 		return $this->controller->getResponse();
 	}
 
@@ -150,16 +178,19 @@ PHP
 	 * Send user to the right location after login
 	 *
 	 * @param array $data
+	 *
 	 * @return SS_HTTPResponse
 	 */
-	protected function logInUserAndRedirect($data) {
+	protected function logInUserAndRedirect($data)
+	{
 		// Check password expiry
-		if(Member::currentUser()->isPasswordExpired()) {
+		if (Member::currentUser()->MemberSecurity()->isPasswordExpired()) {
 			// Redirect the user to the external password change form if necessary
 			return $this->redirectToChangePassword();
 		} else {
 			// Link to success template
 			$url = $this->controller->Link('success');
+
 			return $this->controller->redirect($url);
 		}
 	}

@@ -1,5 +1,11 @@
 <?php
 
+namespace SilverStripe\Security;
+use Member;
+use MemberPassword;
+use Object;
+use ValidationResult;
+
 /**
  * This class represents a validator for member passwords.
  *
@@ -15,12 +21,13 @@
  * @package framework
  * @subpackage security
  */
-class PasswordValidator extends Object {
+class PasswordValidator extends Object
+{
 
 	private static $character_strength_tests = array(
-		'lowercase' => '/[a-z]/',
-		'uppercase' => '/[A-Z]/',
-		'digits' => '/[0-9]/',
+		'lowercase'   => '/[a-z]/',
+		'uppercase'   => '/[A-Z]/',
+		'digits'      => '/[0-9]/',
 		'punctuation' => '/[^A-Za-z0-9]/',
 	);
 
@@ -29,8 +36,10 @@ class PasswordValidator extends Object {
 	/**
 	 * Minimum password length
 	 */
-	public function minLength($minLength) {
+	public function minLength($minLength)
+	{
 		$this->minLength = $minLength;
+
 		return $this;
 	}
 
@@ -39,33 +48,45 @@ class PasswordValidator extends Object {
 	 *
 	 * Eg: $this->characterStrength(3, array("lowercase", "uppercase", "digits", "punctuation"))
 	 *
-	 * @param $minScore The minimum number of character tests that must pass
-	 * @param $testNames The names of the tests to perform
+	 * @param int $minScore The minimum number of character tests that must pass
+	 * @param array $testNames The names of the tests to perform
+	 *
+	 * @return $this
 	 */
-	public function characterStrength($minScore, $testNames) {
+	public function characterStrength($minScore, $testNames)
+	{
 		$this->minScore = $minScore;
 		$this->testNames = $testNames;
+
 		return $this;
 	}
 
 	/**
 	 * Check a number of previous passwords that the user has used, and don't let them change to that.
+	 *
+	 * @param int $count
+	 *
+	 * @return $this
 	 */
-	public function checkHistoricalPasswords($count) {
+	public function checkHistoricalPasswords($count)
+	{
 		$this->historicalPasswordCount = $count;
+
 		return $this;
 	}
 
 	/**
 	 * @param String $password
 	 * @param Member $member
+	 *
 	 * @return ValidationResult
 	 */
-	public function validate($password, $member) {
+	public function validate($password, $member)
+	{
 		$valid = ValidationResult::create();
 
-		if($this->minLength) {
-			if(strlen($password) < $this->minLength) {
+		if ($this->minLength) {
+			if (strlen($password) < $this->minLength) {
 				$valid->error(
 					sprintf(
 						_t(
@@ -79,11 +100,11 @@ class PasswordValidator extends Object {
 			}
 		}
 
-		if($this->minScore) {
+		if ($this->minScore) {
 			$score = 0;
 			$missedTests = array();
-			foreach($this->testNames as $name) {
-				if(preg_match(self::config()->character_strength_tests[$name], $password)) {
+			foreach ($this->testNames as $name) {
+				if (preg_match(self::config()->character_strength_tests[$name], $password)) {
 					$score++;
 				} else {
 					$missedTests[] = _t(
@@ -94,7 +115,7 @@ class PasswordValidator extends Object {
 				}
 			}
 
-			if($score < $this->minScore) {
+			if ($score < $this->minScore) {
 				$valid->error(
 					sprintf(
 						_t(
@@ -108,21 +129,23 @@ class PasswordValidator extends Object {
 			}
 		}
 
-		if($this->historicalPasswordCount) {
+		if ($this->historicalPasswordCount) {
 			$previousPasswords = MemberPassword::get()
 				->where(array('"MemberPassword"."MemberID"' => $member->ID))
 				->sort('"Created" DESC, "ID" DESC')
 				->limit($this->historicalPasswordCount);
-			if($previousPasswords) foreach($previousPasswords as $previousPasswords) {
-				if($previousPasswords->checkPassword($password)) {
-					$valid->error(
-						_t(
-							'PasswordValidator.PREVPASSWORD',
-							'You\'ve already used that password in the past, please choose a new password'
-						),
-						'PREVIOUS_PASSWORD'
-					);
-					break;
+			if ($previousPasswords) {
+				foreach ($previousPasswords as $previousPassword) {
+					if ($previousPassword->checkPassword($password)) {
+						$valid->error(
+							_t(
+								'PasswordValidator.PREVPASSWORD',
+								'You\'ve already used that password in the past, please choose a new password'
+							),
+							'PREVIOUS_PASSWORD'
+						);
+						break;
+					}
 				}
 			}
 		}

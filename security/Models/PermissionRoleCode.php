@@ -1,17 +1,16 @@
 <?php
+
 /**
  * A PermissionRoleCode represents a single permission code assigned to a {@link PermissionRole}.
  *
  * @package framework
  * @subpackage security
- *
- * @property string Code
- *
- * @property int RoleID
- *
+ * @property string $Code
+ * @property int $RoleID
  * @method PermissionRole Role()
  */
-class PermissionRoleCode extends DataObject {
+class PermissionRoleCode extends DataObject
+{
 	private static $db = array(
 		"Code" => "Varchar",
 	);
@@ -20,12 +19,13 @@ class PermissionRoleCode extends DataObject {
 		"Role" => "PermissionRole",
 	);
 
-	public function validate() {
+	public function validate()
+	{
 		$result = parent::validate();
 
 		// Check that new code doesn't increase privileges, unless an admin is editing.
 		$privilegedCodes = Config::inst()->get('Permission', 'privileged_permissions');
-		if(
+		if (
 			$this->Code
 			&& in_array($this->Code, $privilegedCodes)
 			&& !Permission::check('ADMIN')
@@ -42,15 +42,18 @@ class PermissionRoleCode extends DataObject {
 		return $result;
 	}
 
-	public function canCreate($member = null, $context = array()) {
+	public function canCreate($member = null, $context = array())
+	{
 		return Permission::check('APPLY_ROLES', 'any', $member);
 	}
 
-	public function canEdit($member = null) {
+	public function canEdit($member = null)
+	{
 		return Permission::check('APPLY_ROLES', 'any', $member);
 	}
 
-	public function canDelete($member = null) {
+	public function canDelete($member = null)
+	{
 		return Permission::check('APPLY_ROLES', 'any', $member);
 	}
 }

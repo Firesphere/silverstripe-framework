@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Imports member records, and checks/updates duplicates based on their
  * 'Email' property.
@@ -6,7 +7,8 @@
  * @package framework
  * @subpackage security
  */
-class MemberCsvBulkLoader extends CsvBulkLoader {
+class MemberCsvBulkLoader extends CsvBulkLoader
+{
 
 	/**
 	 * @var array Array of {@link Group} records. Import into a specific group.
@@ -14,8 +16,11 @@ class MemberCsvBulkLoader extends CsvBulkLoader {
 	 */
 	protected $groups = array();
 
-	public function __construct($objectClass = null) {
-		if(!$objectClass) $objectClass = 'Member';
+	public function __construct($objectClass = null)
+	{
+		if (!$objectClass) {
+			$objectClass = 'Member';
+		}
 
 		parent::__construct($objectClass);
 	}
@@ -24,26 +29,27 @@ class MemberCsvBulkLoader extends CsvBulkLoader {
 		'Email' => 'Email',
 	);
 
-	public function processRecord($record, $columnMap, &$results, $preview = false) {
+	public function processRecord($record, $columnMap, &$results, $preview = false)
+	{
 		$objID = parent::processRecord($record, $columnMap, $results, $preview);
 
 		$_cache_groupByCode = array();
 
 		// Add to predefined groups
 		$member = DataObject::get_by_id($this->objectClass, $objID);
-		foreach($this->groups as $group) {
+		foreach ($this->groups as $group) {
 			// TODO This isnt the most memory effective way to add members to a group
 			$member->Groups()->add($group);
 		}
 
 		// Add to groups defined in CSV
-		if(isset($record['Groups']) && $record['Groups']) {
+		if (isset($record['Groups']) && $record['Groups']) {
 			$groupCodes = explode(',', $record['Groups']);
-			foreach($groupCodes as $groupCode) {
+			foreach ($groupCodes as $groupCode) {
 				$groupCode = Convert::raw2url($groupCode);
-				if(!isset($_cache_groupByCode[$groupCode])) {
+				if (!isset($_cache_groupByCode[$groupCode])) {
 					$group = Group::get()->filter('Code', $groupCode)->first();
-					if(!$group) {
+					if (!$group) {
 						$group = new Group();
 						$group->Code = $groupCode;
 						$group->Title = $groupCode;
@@ -64,14 +70,16 @@ class MemberCsvBulkLoader extends CsvBulkLoader {
 	/**
 	 * @param Array $groups
 	 */
-	public function setGroups($groups) {
+	public function setGroups($groups)
+	{
 		$this->groups = $groups;
 	}
 
 	/**
 	 * @return Array
 	 */
-	public function getGroups() {
+	public function getGroups()
+	{
 		return $this->groups;
 	}
 }

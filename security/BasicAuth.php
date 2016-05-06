@@ -1,4 +1,14 @@
 <?php
+namespace SilverStripe\Security;
+
+use Config;
+use Member;
+use Director;
+use Permission;
+use SapphireTest;
+use SS_HTTPResponse;
+use SS_HTTPResponse_Exception;
+
 /**
  * Provides an interface to HTTP basic authentication.
  *
@@ -11,7 +21,8 @@
  * @package framework
  * @subpackage security
  */
-class BasicAuth {
+class BasicAuth
+{
 	/**
 	 * @config
 	 * @var Boolean Flag set by {@link self::protect_entire_site()}
@@ -44,46 +55,49 @@ class BasicAuth {
 	 * @param string|array $permissionCode Optional
 	 * @param boolean $tryUsingSessionLogin If true, then the method with authenticate against the
 	 *  session log-in if those credentials are disabled.
+	 *
 	 * @return Member $member
 	 */
-	public static function requireLogin($realm, $permissionCode = null, $tryUsingSessionLogin = true) {
+	public static function requireLogin($realm, $permissionCode = null, $tryUsingSessionLogin = true)
+	{
 		$isRunningTests = (class_exists('SapphireTest', false) && SapphireTest::is_running_test());
-		if(!Security::database_is_ready() || (Director::is_cli() && !$isRunningTests)) return true;
+		if (!Security::database_is_ready() || (Director::is_cli() && !$isRunningTests)) return true;
 
-                /*
-                 * Enable HTTP Basic authentication workaround for PHP running in CGI mode with Apache
-                 * Depending on server configuration the auth header may be in HTTP_AUTHORIZATION or
-                 * REDIRECT_HTTP_AUTHORIZATION
-                 *
-                 * The follow rewrite rule must be in the sites .htaccess file to enable this workaround
-                 * RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-                 */
+		/*
+         * Enable HTTP Basic authentication workaround for PHP running in CGI mode with Apache
+         * Depending on server configuration the auth header may be in HTTP_AUTHORIZATION or
+         * REDIRECT_HTTP_AUTHORIZATION
+         *
+         * The follow rewrite rule must be in the sites .htaccess file to enable this workaround
+         * RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+         */
 		$authHeader = (isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] :
-			      (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) ? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] : null));
+			(isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) ? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] : null));
 		$matches = array();
 		if ($authHeader &&
-                        preg_match('/Basic\s+(.*)$/i', $authHeader, $matches)) {
+			preg_match('/Basic\s+(.*)$/i', $authHeader, $matches)
+		) {
 			list($name, $password) = explode(':', base64_decode($matches[1]));
 			$_SERVER['PHP_AUTH_USER'] = strip_tags($name);
 			$_SERVER['PHP_AUTH_PW'] = strip_tags($password);
 		}
 
 		$member = null;
-		if(isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW'])) {
+		if (isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW'])) {
 			$member = MemberAuthenticator::authenticate(array(
-				'Email' => $_SERVER['PHP_AUTH_USER'],
+				'Email'    => $_SERVER['PHP_AUTH_USER'],
 				'Password' => $_SERVER['PHP_AUTH_PW'],
 			), null);
 		}
 
-		if(!$member && $tryUsingSessionLogin) $member = Member::currentUser();
+		if (!$member && $tryUsingSessionLogin) $member = Member::currentUser();
 
 		// If we've failed the authentication mechanism, then show the login form
-		if(!$member) {
+		if (!$member) {
 			$response = new SS_HTTPResponse(null, 401);
 			$response->addHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
 
-			if(isset($_SERVER['PHP_AUTH_USER'])) {
+			if (isset($_SERVER['PHP_AUTH_USER'])) {
 				$response->setBody(_t('BasicAuth.ERRORNOTREC', "That username / password isn't recognised"));
 			} else {
 				$response->setBody(_t('BasicAuth.ENTERINFO', "Please enter a username and password."));
@@ -95,11 +109,11 @@ class BasicAuth {
 			throw $e;
 		}
 
-		if($permissionCode && !Permission::checkMember($member->ID, $permissionCode)) {
+		if ($permissionCode && !Permission::checkMember($member->ID, $permissionCode)) {
 			$response = new SS_HTTPResponse(null, 401);
 			$response->addHeader('WWW-Authenticate', "Basic realm=\"$realm\"");
 
-			if(isset($_SERVER['PHP_AUTH_USER'])) {
+			if (isset($_SERVER['PHP_AUTH_USER'])) {
 				$response->setBody(_t('BasicAuth.ERRORNOTADMIN', "That user is not an administrator."));
 			}
 
@@ -129,7 +143,8 @@ class BasicAuth {
 	 *  Defaults to "ADMIN". Set to NULL to just require a valid login, regardless
 	 *  of the permission codes a user has.
 	 */
-	public static function protect_entire_site($protect = true, $code = 'ADMIN', $message = null) {
+	public static function protect_entire_site($protect = true, $code = 'ADMIN', $message = null)
+	{
 		Config::inst()->update('BasicAuth', 'entire_site_protected', $protect);
 		Config::inst()->update('BasicAuth', 'entire_site_protected_code', $code);
 		Config::inst()->update('BasicAuth', 'entire_site_protected_message', $message);
@@ -142,9 +157,10 @@ class BasicAuth {
 	 * If you want to enabled protection (rather than enforcing it),
 	 * please use {@link protect_entire_site()}.
 	 */
-	public static function protect_site_if_necessary() {
+	public static function protect_site_if_necessary()
+	{
 		$config = Config::inst()->forClass('BasicAuth');
-		if($config->entire_site_protected) {
+		if ($config->entire_site_protected) {
 			self::requireLogin($config->entire_site_protected_message, $config->entire_site_protected_code, false);
 		}
 	}

@@ -7,6 +7,8 @@
 
 use SilverStripe\Forms\Schema\FormSchema;
 use SilverStripe\Model\FieldType\DBField;
+use SilverStripe\Security\Security;
+use SilverStripe\Security\SecurityToken;
 
 /**
  * LeftAndMain is the parent class of all the two-pane views in the CMS.
