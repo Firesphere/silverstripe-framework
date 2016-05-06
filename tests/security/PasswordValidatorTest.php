@@ -1,4 +1,6 @@
 <?php
+use SilverStripe\Security\PasswordValidator;
+
 /**
  * @package framework
  * @subpackage tests
