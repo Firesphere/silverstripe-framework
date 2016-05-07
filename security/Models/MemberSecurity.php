@@ -8,7 +8,7 @@ use SilverStripe\Security\SecurityEncryption;
  * away from the Member itself.
  *
  * @todo Work in Progress, not yet implemented.
- * 
+ *
  * Class MemberSecurity
  * @package framework/security
  * @property string $TempIDToken
@@ -30,9 +30,47 @@ class MemberSecurity extends DataObject
 	 * @config
 	 * {@link MemberValidator} object for validating user's password
 	 *
-	 * @param SilverStripe\Security\MemberValidator
+	 * @param MemberValidator
 	 */
 	private static $password_validator;
+
+	/**
+	 * Default lifetime of temporary ids.
+	 *
+	 * This is the period within which a user can be re-authenticated within the CMS by entering only their password
+	 * and without losing their workspace.
+	 *
+	 * Any session expiration outside of this time will require them to login from the frontend using their full
+	 * username and password.
+	 *
+	 * Defaults to 72 hours. Set to zero to disable expiration.
+	 *
+	 * @config
+	 * @var int Lifetime in seconds
+	 */
+	private static $temp_id_lifetime = 259200;
+
+	/**
+	 * @config
+	 * The number of days that a password should be valid for.
+	 * By default, this is null, which means that passwords never expire
+	 */
+	private static $password_expiry_days;
+
+	/**
+	 * @config
+	 * @var Int Number of incorrect logins after which
+	 * the user is blocked from further attempts for the timespan
+	 * defined in {@link $lock_out_delay_mins}.
+	 */
+	private static $lock_out_after_incorrect_logins = 2;
+
+	/**
+	 * @config
+	 * @var integer Minutes of enforced lockout after incorrect password attempts.
+	 * Only applies if {@link $lock_out_after_incorrect_logins} greater than 0.
+	 */
+	private static $lock_out_delay_mins = 15;
 
 	/**
 	 * @var array
@@ -249,7 +287,9 @@ class MemberSecurity extends DataObject
 			"\"MemberID\""                  => Member::currentUserID()
 		))->first();
 
-		if ($login && $memberSecurity) $memberSecurity->Member()->logIn();
+		if ($login && $memberSecurity) {
+			$memberSecurity->Member()->logIn();
+		}
 
 		return $memberSecurity->Member();
 	}

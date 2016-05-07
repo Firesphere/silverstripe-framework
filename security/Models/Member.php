@@ -1,11 +1,9 @@
 <?php
 
-use SilverStripe\Model\FieldType\DBDatetime;
-use SilverStripe\Security\MemberValidator;
-use SilverStripe\Security\PasswordEncryptor;
-use SilverStripe\Security\RandomGenerator;
 use SilverStripe\Security\Security;
-use SilverStripe\Security\SecurityEncryption;
+use SilverStripe\Security\MemberValidator;
+use SilverStripe\Security\RandomGenerator;
+use SilverStripe\Model\FieldType\DBDatetime;
 
 /**
  * The member class which represents the users of the system
@@ -134,28 +132,6 @@ class Member extends DataObject implements TemplateGlobalProvider
 
 	/**
 	 * @config
-	 * The number of days that a password should be valid for.
-	 * By default, this is null, which means that passwords never expire
-	 */
-	private static $password_expiry_days;
-
-	/**
-	 * @config
-	 * @var Int Number of incorrect logins after which
-	 * the user is blocked from further attempts for the timespan
-	 * defined in {@link $lock_out_delay_mins}.
-	 */
-	private static $lock_out_after_incorrect_logins = 5;
-
-	/**
-	 * @config
-	 * @var integer Minutes of enforced lockout after incorrect password attempts.
-	 * Only applies if {@link $lock_out_after_incorrect_logins} greater than 0.
-	 */
-	private static $lock_out_delay_mins = 15;
-
-	/**
-	 * @config
 	 * @var String If this is set, then a session cookie with the given name will be set on log-in,
 	 * and cleared on logout.
 	 */
@@ -172,23 +148,6 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 * @var boolean
 	 */
 	private static $session_regenerate_id = true;
-
-
-	/**
-	 * Default lifetime of temporary ids.
-	 *
-	 * This is the period within which a user can be re-authenticated within the CMS by entering only their password
-	 * and without losing their workspace.
-	 *
-	 * Any session expiration outside of this time will require them to login from the frontend using their full
-	 * username and password.
-	 *
-	 * Defaults to 72 hours. Set to zero to disable expiration.
-	 *
-	 * @config
-	 * @var int Lifetime in seconds
-	 */
-	private static $temp_id_lifetime = 259200;
 
 	/**
 	 * Ensure the locale is set to something sensible by default.
@@ -217,7 +176,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 */
 	public static function default_admin()
 	{
-			$identifierField = Config::inst()->get('Security', 'unique_identifier_field');
+		$identifierField = Config::inst()->get('Security', 'unique_identifier_field');
 		// Check if set
 		if (!Security::has_default_admin()) {
 			return null;
@@ -225,7 +184,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 
 		// Find or create ADMIN group
 		singleton('Group')->requireDefaultRecords();
-		// @todo rewrite to use the constant for the Code @see Gr§oup
+		// @todo rewrite to use the constant for the Code @see Group
 		$adminGroup = Permission::get_groups_by_permission('ADMIN')->first();
 
 		// Find member
@@ -293,13 +252,14 @@ class Member extends DataObject implements TemplateGlobalProvider
 	public function logIn($remember = false)
 	{
 		$this->extend('beforeMemberLoggedIn');
+		$security = $this->MemberSecurity();
 
 		self::session_regenerate_id();
 
-		Session::set("loggedInAs", $this->ID);
+		Session::set('loggedInAs', $this->ID);
 		// This lets apache rules detect whether the user has logged in
 		if (Member::config()->get('login_marker_cookie')) {
-			Cookie::set(Member::config()->login_marker_cookie, 1, 0);
+			Cookie::set(Member::config()->get('login_marker_cookie'), 1, 0);
 		}
 
 		// Cleans up any potential previous hash for this member on this device
@@ -324,12 +284,12 @@ class Member extends DataObject implements TemplateGlobalProvider
 		$this->registerSuccessfulLogin();
 
 		// Don't set column if its not built yet (the login might be precursor to a /dev/build...)
-		if (array_key_exists('LockedOutUntil', DB::field_list('Member'))) {
-			$this->LockedOutUntil = null;
+		if (array_key_exists('LockedOutUntil', DB::field_list('MemberSecurity'))) {
+			$security->LockedOutUntil = null;
 		}
 
 		$this->regenerateTempID();
-
+		$security->write();
 		$this->write();
 
 		// Audit logging hook
@@ -345,11 +305,12 @@ class Member extends DataObject implements TemplateGlobalProvider
 	public function regenerateTempID()
 	{
 		$generator = new RandomGenerator();
-		$this->TempIDHash = $generator->randomToken('sha1');
-		$this->TempIDExpired = self::config()->temp_id_lifetime
+		$security = $this->MemberSecurity();
+		$security->TempIDToken = $generator->randomToken('sha1');
+		$security->TempIDExpired = self::config()->temp_id_lifetime
 			? date('Y-m-d H:i:s', strtotime(DBDatetime::now()->getValue()) + self::config()->temp_id_lifetime)
 			: null;
-		$this->write();
+		$security->write();
 	}
 
 	/**
@@ -507,7 +468,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 	}
 
 	/**
-	 * Find a member record with the given TempIDHash value
+	 * Find a member record with the given TempIDToken value
 	 *
 	 * @param string $tempid
 	 *
@@ -516,10 +477,10 @@ class Member extends DataObject implements TemplateGlobalProvider
 	public static function member_from_tempid($tempid)
 	{
 		$members = Member::get()
-			->filter('TempIDHash', $tempid);
+			->filter('MemberSecurity.TempIDToken', $tempid);
 
 		// Exclude expired
-		if (static::config()->temp_id_lifetime) {
+		if (MemberSecurity::config()->get('temp_id_lifetime')) {
 			$members = $members->filter('TempIDExpired:GreaterThan', DBDatetime::now()->getValue());
 		}
 
@@ -573,7 +534,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 */
 	public function getValidator()
 	{
-		$validator = Injector::inst()->create('SilverStripe\Security\MemberValidator');
+		$validator = Injector::inst()->create('MemberValidator');
 		$validator->setForMember($this);
 		$this->extend('updateValidator', $validator);
 
@@ -878,7 +839,9 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 */
 	public static function set_title_columns($columns, $sep = ' ')
 	{
-		if (!is_array($columns)) $columns = array($columns);
+		if (!is_array($columns)) {
+			$columns = array($columns);
+		}
 		self::config()->title_format = array('columns' => $columns, 'sep' => $sep);
 	}
 
@@ -903,10 +866,11 @@ class Member extends DataObject implements TemplateGlobalProvider
 				$values[] = $this->getField($col);
 			}
 
-			return join($format['sep'], $values);
+			return implode($format['sep'], $values);
 		}
-		if ($this->getField('ID') === 0)
+		if ($this->getField('ID') === 0){
 			return $this->getField('Surname');
+		}
 		else {
 			if ($this->getField('Surname') && $this->getField('FirstName')) {
 				return $this->getField('Surname') . ', ' . $this->getField('FirstName');
@@ -940,7 +904,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 				$columnsWithTablename[] = "\"$tableName\".\"$column\"";
 			}
 
-			return "(" . join(" $op '" . $format['sep'] . "' $op ", $columnsWithTablename) . ")";
+			return "(" . implode(" $op '" . $format['sep'] . "' $op ", $columnsWithTablename) . ")";
 		} else {
 			return "(\"$tableName\".\"Surname\" $op ' ' $op \"$tableName\".\"FirstName\")";
 		}
@@ -970,7 +934,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 	{
 		$nameParts = explode(' ', $name);
 		$this->Surname = array_pop($nameParts);
-		$this->FirstName = join(' ', $nameParts);
+		$this->FirstName = implode(' ', $nameParts);
 	}
 
 
@@ -983,7 +947,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 */
 	public function splitName($name)
 	{
-		return $this->setName($name);
+		$this->setName($name);
 	}
 
 	/**
@@ -1078,6 +1042,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 
 		$membersList = new ArrayList();
 		// This is a bit ineffective, but follow the ORM style
+		/** @var Group $group */
 		foreach (Group::get()->byIDs($groupIDList) as $group) {
 			$membersList->merge($group->Members());
 		}
@@ -1093,7 +1058,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 *
 	 * If no groups are passed, all groups with CMS permissions will be used.
 	 *
-	 * @param array $groups Groups to consider or NULL to use all groups with
+	 * @param ArrayList|array $groups Groups to consider or NULL to use all groups with
 	 *                      CMS permissions.
 	 *
 	 * @return SS_Map Returns a map of all members in the groups given that
@@ -1101,7 +1066,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 */
 	public static function mapInCMSGroups($groups = null)
 	{
-		if (!$groups || $groups->Count() == 0) {
+		if ($groups === null || count($groups) === 0 || $groups->count() === 0) {
 			$perms = array('ADMIN', 'CMS_ACCESS_AssetAdmin');
 
 			if (class_exists('CMSMain')) {
@@ -1153,18 +1118,20 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 * function will return the array of groups the member is NOT in.
 	 *
 	 * @param array $groupList An array of group code names.
-	 * @param array $memberGroups A component set of groups (if set to NULL,
+	 * @param array|MemberGroupset $memberGroups A component set of groups (if set to NULL,
 	 *                            $this->groups() will be used)
 	 *
 	 * @return array Groups in which the member is NOT in.
 	 */
 	public function memberNotInGroups($groupList, $memberGroups = null)
 	{
-		if (!$memberGroups) $memberGroups = $this->Groups();
+		if (!$memberGroups) {
+			$memberGroups = $this->Groups();
+		}
 
 		foreach ($memberGroups as $group) {
-			if (in_array($group->Code, $groupList)) {
-				$index = array_search($group->Code, $groupList);
+			if (in_array($group->Code, $groupList, null)) {
+				$index = array_search($group->Code, $groupList, null);
 				unset($groupList[$index]);
 			}
 		}
@@ -1208,7 +1175,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 			));
 			$mainFields->removeByName($self->config()->hidden_fields);
 
-			if (!$self->config()->lock_out_after_incorrect_logins) {
+			if (!MemberSecurity::config()->get('lock_out_after_incorrect_logins')) {
 				$mainFields->removeByName('FailedLoginCount');
 			}
 
@@ -1257,7 +1224,9 @@ class Member extends DataObject implements TemplateGlobalProvider
 			}
 
 			$permissionsTab = $fields->fieldByName("Root")->fieldByName('Permissions');
-			if ($permissionsTab) $permissionsTab->addExtraClass('readonly');
+			if ($permissionsTab) {
+				$permissionsTab->addExtraClass('readonly');
+			}
 
 			$defaultDateFormat = Zend_Locale_Format::getDateFormat(new Zend_Locale($self->Locale));
 			$dateFormatMap = array(
@@ -1301,6 +1270,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 *
 	 * @param boolean $includerelations a boolean value to indicate if the labels returned include relation fields
 	 *
+	 * @return array|string
 	 */
 	public function fieldLabels($includerelations = true)
 	{
@@ -1447,7 +1417,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 		$valid = $security->validate();
 
 		if ($valid->valid()) {
-			$security->AutoLoginHash = null;
+			$security->AutoLoginToken = null;
 			$security->write();
 		}
 
@@ -1460,18 +1430,18 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 */
 	public function registerFailedLogin()
 	{
+		$security = $this->MemberSecurity();
 		if (MemberSecurity::config()->get('lock_out_after_incorrect_logins')) {
 			// Keep a tally of the number of failed log-ins so that we can lock people out
-			++$this->MemberSecurity()->FailedLoginCount;
+			++$security->FailedLoginCount;
 
-			if ($this->MemberSecurity()->FailedLoginCount >= MemberSecurity::config()->get('lock_out_after_incorrect_logins')) {
-				$lockoutMins = self::config()->get('lock_out_delay_mins');
-				$this->MemberSecurity()->LockedOutUntil = date('Y-m-d H:i:s', time() + $lockoutMins * 60);
-				$this->MemberSecurity()->FailedLoginCount = 0;
+			if ($security->FailedLoginCount >= MemberSecurity::config()->get('lock_out_after_incorrect_logins')) {
+				$lockoutMins = MemberSecurity::config()->get('lock_out_delay_mins');
+				$security->LockedOutUntil = date('Y-m-d H:i:s', time() + $lockoutMins * 60);
 			}
 		}
 		$this->extend('registerFailedLogin');
-		$this->MemberSecurity()->write();
+		$security->write();
 	}
 
 	/**
@@ -1479,10 +1449,11 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 */
 	public function registerSuccessfulLogin()
 	{
+		$security = $this->MemberSecurity();
 		if (MemberSecurity::config()->get('lock_out_after_incorrect_logins')) {
-			// Forgive all past login failures
-			$this->MemberSecurity()->FailedLoginCount = 0;
-			$this->MemberSecurity()->write();
+			// Forgive all past login failures, we are a generous god.
+			$security->FailedLoginCount = 0;
+			$security->write();
 		}
 	}
 
@@ -1599,8 +1570,8 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 */
 	public static function set_password_expiry($days)
 	{
-		Deprecation::notice('4.0', 'Use the "Member.password_expiry_days" config setting instead');
-		self::config()->password_expiry_days = $days;
+		Deprecation::notice('4.0', 'Use the "MemberSecurity.password_expiry_days" config setting instead');
+		MemberSecurity::config()->password_expiry_days = $days;
 	}
 
 	/**
@@ -1610,8 +1581,8 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 */
 	public static function lock_out_after_incorrect_logins($numLogins)
 	{
-		Deprecation::notice('4.0', 'Use the "Member.lock_out_after_incorrect_logins" config setting instead');
-		self::config()->lock_out_after_incorrect_logins = $numLogins;
+		Deprecation::notice('4.0', 'Use the "MemberSecurity.lock_out_after_incorrect_logins" config setting instead');
+		MemberSecurity::config()->update('lock_out_after_incorrect_logins',  $numLogins);
 	}
 
 }
