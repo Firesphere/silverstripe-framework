@@ -1,5 +1,7 @@
 <?php
 
+use SilverStripe\Security\SecurityToken;
+
 class GridFieldDeleteActionTest extends SapphireTest {
 
 	/** @var ArrayList */

@@ -7,6 +7,8 @@ Injector:
     class: SilverStripe\Security\RandomGenerator
   MemberValidator:
     class: SilverStripe\Security\MemberValidator
+  SecurityAdmin:
+    class: SilverStripe\Security\SecurityAdmin
 Security:
   login_url: "Security/login"
   logout_url: "Security/logout"
