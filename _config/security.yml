@@ -5,6 +5,8 @@ Injector:
     class: SilverStripe\Security\Authenticator
   RandomGenerator:
     class: SilverStripe\Security\RandomGenerator
+  MemberValidator:
+    class: SilverStripe\Security\MemberValidator
 Security:
   login_url: "Security/login"
   logout_url: "Security/logout"
