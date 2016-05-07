@@ -1,4 +1,6 @@
 <?php
+use SilverStripe\Security\BasicAuth;
+use SilverStripe\Security\SecurityToken;
 
 /**
  * SilverStripe-specific testing object designed to support functional testing of your web app.  It simulates get/post

@@ -1,4 +1,5 @@
 <?php
+use SilverStripe\Security\SecurityToken;
 
 /**
  * Tests for RequestHandler and SS_HTTPRequest.

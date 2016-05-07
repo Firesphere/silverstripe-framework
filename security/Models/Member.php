@@ -648,7 +648,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 	 */
 	public function onBeforeWrite()
 	{
-		if($this->MemberSecurity() === null) {
+		if($this->MemberSecurity()->exists() === false) {
 			$security = MemberSecurity::create();
 			$id = $security->write();
 			$this->MemberSecurityID = $id;

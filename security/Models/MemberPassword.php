@@ -33,10 +33,11 @@ class MemberPassword extends DataObject
 	public static function log($member)
 	{
 		$record = MemberPassword::create();
+		$security = $member->MemberSecurity();
 		$record->MemberID = $member->ID;
-		$record->Password = $member->Password;
-		$record->PasswordEncryption = $member->PasswordEncryption;
-		$record->Salt = $member->Salt;
+		$record->Password = $security->Password;
+		$record->PasswordEncryption = $security->PasswordEncryption;
+		$record->Salt = $security->Salt;
 		$record->write();
 	}
 
