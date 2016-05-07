@@ -149,7 +149,7 @@ class PasswordEncryptorTest_TestEncryptor extends PasswordEncryptor implements T
 		return 'password';
 	}
 
-	public function salt($password, $member = null) {
+	public function salt() {
 		return 'salt';
 	}
 }

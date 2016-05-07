@@ -1,4 +1,6 @@
 <?php
+use SilverStripe\Security\RandomGenerator;
+use SilverStripe\Security\SecurityToken;
 
 /**
  * @package framework

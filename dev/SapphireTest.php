@@ -2,6 +2,7 @@
 
 use SilverStripe\Model\FieldType\DBField;
 use SilverStripe\Model\FieldType\DBDatetime;
+use SilverStripe\Security\Security;
 
 /**
  * Test case class for the Sapphire framework.
@@ -212,7 +213,7 @@ class SapphireTest extends PHPUnit_Framework_TestCase {
 		if(class_exists('SiteTree')) SiteTree::reset();
 		Hierarchy::reset();
 		if(Controller::has_curr()) Controller::curr()->setSession(Injector::inst()->create('Session', array()));
-		Security::$database_is_ready = null;
+		Config::inst()->update('Security', 'database_is_ready', null);
 
 		// Add controller-name auto-routing
 		Config::inst()->update('Director', 'rules', array(
