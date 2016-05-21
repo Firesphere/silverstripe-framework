@@ -215,6 +215,8 @@ class Member extends DataObject implements TemplateGlobalProvider
 		return $admin;
 	}
 
+
+
 	/**
 	 * Regenerate the session_id.
 	 * This wrapper is here to make it easier to disable calls to session_regenerate_id(), should you need to.
@@ -351,11 +353,6 @@ class Member extends DataObject implements TemplateGlobalProvider
 
 		if (strpos(Cookie::get('alc_enc'), ':') && Cookie::get('alc_device') && !Session::get("loggedInAs")) {
 			list($uid, $token) = explode(':', Cookie::get('alc_enc'), 2);
-
-			if (!$uid || !$token) {
-				return;
-			}
-
 			$deviceID = Cookie::get('alc_device');
 
 			$member = Member::get()->byId($uid);
@@ -500,6 +497,7 @@ class Member extends DataObject implements TemplateGlobalProvider
 	public function getMemberFormFields()
 	{
 		$fields = parent::getFrontEndFields();
+
 		$fields->replaceField('Password', $password = new ConfirmedPasswordField (
 			'Password',
 			$this->fieldLabel('Password'),
@@ -523,36 +521,6 @@ class Member extends DataObject implements TemplateGlobalProvider
 
 		return $fields;
 	}
-
-	/**
-	 * Builds "Change / Create Password" field for this member
-	 *
-	 * @return ConfirmedPasswordField
-	 */
-	public function getMemberPasswordField() {
-		$editingPassword = $this->isInDB();
-		$label = $editingPassword
-			? _t('Member.EDIT_PASSWORD', 'New Password')
-			: $this->fieldLabel('Password');
-		/** @var ConfirmedPasswordField $password */
-		$password = ConfirmedPasswordField::create(
-			'Password',
-			$label,
-			null,
-			null,
-			$editingPassword
-		);
-
-		// If editing own password, require confirmation of existing
-		if($editingPassword && $this->ID == Member::currentUserID()) {
-			$password->setRequireExistingPassword(true);
-		}
-
-		$password->setCanBeEmpty(true);
-		$this->extend('updateMemberPasswordField', $password);
-		return $password;
-	}
-
 
 	/**
 	 * Returns the {@link RequiredFields} instance for the Member object. This
