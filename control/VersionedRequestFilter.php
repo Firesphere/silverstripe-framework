@@ -1,4 +1,5 @@
 <?php
+use SilverStripe\Security\Security;
 
 /**
  * Initialises the versioned stage when a request is made.
