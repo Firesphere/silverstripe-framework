@@ -29,7 +29,7 @@ following base classes:
 
 [api:Authenticator] - The base class for authentication systems. This class also acts as the factory to generate various login forms for parts of the system. If an authenticator supports in-cms	reauthentication then it will be necessary to override the `supports_cms` and `get_cms_login_form` methods.
 
-[api:LoginForm] - which is the base class for a login form which links to a specific authenticator. At the very least, it will be necessary to implement a form class which provides a default login interface. If in-cms re-authentication is desired, then a specialised subclass of this method may be necessary. For example, this form could be extended to require confirmation of username as well as password.
+[api:LoginForm] - which is the base class for a login form which links to a specific authenticator. At the very least, it will be necessary to implement a form class which provides a default login interface and name for the form (`getAuthenticatorName` method). If in-cms re-authentication is desired, then a specialised subclass of this method may be necessary. For example, this form could be extended to require confirmation of username as well as password.
 
 ## Default Admin
 
