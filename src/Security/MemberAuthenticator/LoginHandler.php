@@ -3,12 +3,11 @@
 namespace SilverStripe\Security\MemberAuthenticator;
 
 use SilverStripe\Control\Controller;
-use SilverStripe\Control\Email\Email;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Control\Session;
 use SilverStripe\Control\RequestHandler;
 use SilverStripe\ORM\ValidationResult;
-use SilverStripe\Security\Authenticator;
+use SilverStripe\Security\MemberAuthenticator\Authenticator;
 use SilverStripe\Security\Security;
 use SilverStripe\Security\Member;
 
@@ -17,7 +16,7 @@ use SilverStripe\Security\Member;
  */
 class LoginHandler extends RequestHandler
 {
-    protected $authenticator_class = MemberAuthenticator::class;
+    protected $authenticator;
 
     private static $url_handlers = [
         '' => 'login',
@@ -40,14 +39,14 @@ class LoginHandler extends RequestHandler
     private $link = null;
 
     /**
-     * @param $link The URL to recreate this request handler
-     * @param $authenticator The
+     * @param string $link The URL to recreate this request handler
+     * @param Authenticator $authenticator The
      */
     public function __construct($link, Authenticator $authenticator)
     {
         $this->link = $link;
         $this->authenticator = $authenticator;
-        parent::__construct();
+        parent::__construct($link, $this);
     }
 
     /**
@@ -92,9 +91,10 @@ class LoginHandler extends RequestHandler
      * This method is called when the user clicks on "Log in"
      *
      * @param array $data Submitted data
+     * @param LoginHandler $formHandler
      * @return HTTPResponse
      */
-    public function dologin($data, $form, $request, $formHandler)
+    public function doLogin($data, $formHandler)
     {
         if ($this->performLogin($data)) {
             return $this->logInUserAndRedirect($data, $formHandler);
@@ -106,6 +106,7 @@ class LoginHandler extends RequestHandler
             Session::set('SessionForms.MemberLoginForm.Remember', isset($data['Remember']));
         }
 
+        return $this->redirectBack();
         // Fail to login redirects back to form
         return $formHandler->redirectBackToForm();
     }

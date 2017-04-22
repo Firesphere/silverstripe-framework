@@ -9,6 +9,7 @@ use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\Control\Session;
 use SilverStripe\Control\RequestHandler;
 use SilverStripe\Core\ClassInfo;
@@ -21,6 +22,7 @@ use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\Form;
 use SilverStripe\Forms\FormAction;
 use SilverStripe\ORM\ArrayList;
+use SilverStripe\ORM\DataModel;
 use SilverStripe\ORM\DB;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
@@ -208,7 +210,7 @@ class Security extends Controller implements TemplateGlobalProvider
      * @var boolean If set to TRUE or FALSE, {@link database_is_ready()}
      * will always return FALSE. Used for unit testing.
      */
-    static $force_database_is_ready = null;
+    protected static $force_database_is_ready = null;
 
     /**
      * When the database has once been verified as ready, it will not do the
@@ -216,7 +218,11 @@ class Security extends Controller implements TemplateGlobalProvider
      *
      * @var bool
      */
-    static $database_is_ready = false;
+    protected static $database_is_ready = false;
+
+    protected static $authenticators = [];
+
+    protected static $default_authenticator = MemberAuthenticator\Authenticator::class;
 
     /**
      * Get all registered authenticators
@@ -353,10 +359,10 @@ class Security extends Controller implements TemplateGlobalProvider
             }
 
             // Somewhat hackish way to render a login form with an error message.
-            $me = new Security();
-            $form = $me->LoginForm();
-            $form->sessionMessage($message, ValidationResult::TYPE_WARNING);
-            Session::set('MemberLoginForm.force_message', 1);
+//            $me = new Security();
+//            $form = $me->LoginForm();
+//            $form->sessionMessage($message, ValidationResult::TYPE_WARNING);
+//            Session::set('MemberLoginForm.force_message', 1);
             $loginResponse = $me->login();
             if ($loginResponse instanceof HTTPResponse) {
                 return $loginResponse;
@@ -416,12 +422,12 @@ class Security extends Controller implements TemplateGlobalProvider
     protected function getAuthenticator()
     {
         $authenticator = $this->getRequest()->requestVar('AuthenticationMethod');
-        if ($authenticator && Security::hasAuthenticator($authenticator)) {
+        if ($authenticator && self::hasAuthenticator($authenticator)) {
             return Injector::inst()->get($authenticator);
 
         } elseif ($authenticator !== '') {
             $authenticators = self::getAuthenticators();
-            if (sizeof($authenticators) > 0) {
+            if (count($authenticators) > 0) {
                 return $authenticators[0];
             }
         }
@@ -439,7 +445,8 @@ class Security extends Controller implements TemplateGlobalProvider
     {
         $authenticator = $this->getAuthenticator();
         if ($authenticator) {
-            return $authenticator::get_login_form($this);
+            $handler = $authenticator->getLoginHandler($this->Link());
+            return $handler->handleRequest($this->request, DataModel::inst());
         }
         throw new Exception('Passed invalid authentication method');
     }
@@ -454,13 +461,11 @@ class Security extends Controller implements TemplateGlobalProvider
      */
     public function getLoginForms()
     {
-        $forms = array();
-
         return array_map(
-            Security::getAuthenticators(),
             function ($authenticator) {
-                return $authenticator->getLoginHandler();
-            }
+                return $authenticator->getLoginHandler($this->Link())->handleRequest($this->getRequest(), DataModel::inst());
+            },
+            Security::getAuthenticators()
         );
     }
 
@@ -582,7 +587,7 @@ class Security extends Controller implements TemplateGlobalProvider
     /**
      * Combine the given forms into a formset with a tabbed interface
      *
-     * @param array $forms List of LoginForm instances
+     * @param array $authenticators List of Authenticator instances
      * @return string
      */
     protected function generateLoginFormSet($forms)
@@ -658,80 +663,151 @@ class Security extends Controller implements TemplateGlobalProvider
             return $response;
         }
 
-        // Create the login handler
-        $handler = $this->getAuthenticator()->getLoginHandler(
-            Controller::join_links($this->link(), 'login')
+        $link = $this->link("login");
+
+        // Delegate to a single handler - Security/login/<authname>/...
+        if ($authenticatorName = $request->param('ID')) {
+            $request->shift();
+
+            $authenticator = $this->getAuthenticator($authenticatorName);
+            if (!$authenticator) {
+                throw new HTTPResponse_Exception(404, 'No authenticator "' . $authenticatorName . '"');
+            }
+
+            $handler = $authenticator->getLoginHandler(Controller::join_links($link, $authenticatorName));
+
+            return $this->delegateToHandler(
+                $handler,
+                _t('Security.LOGIN', 'Log in'),
+                $this->getTemplatesFor('login')
+            );
+
+        // Delegate to all of them, building a tabbed view - Security/login
+        } else {
+            $handlers = $this->getAuthenticators();
+            array_walk(
+                $handlers,
+                function (&$auth, $name) use ($link) {
+                    $auth = $auth->getLoginHandler(Controller::join_links($link, $name));
+                }
+            );
+
+            if (count($handlers) === 1) {
+                return $this->delegateToHandler(
+                    array_values($handlers)[0],
+                    _t('Security.LOGIN', 'Log in'),
+                    $this->getTemplatesFor('login')
+                );
+
+            } else {
+                return $this->delegateToFormSet(
+                    $handlers,
+                    _t('Security.LOGIN', 'Log in'),
+                    $this->getTemplatesFor('login')
+                );
+            }
+        }
+
+    }
+
+    /**
+     * Delegate to an number of handlers, extracting their forms and rendering a tabbed form-set.
+     * This is used to built the log-in page where there are multiple authenticators active.
+     *
+     * @param string $title The title of the form
+     * @param array $templates
+     * @return array|HTTPResponse|RequestHandler|\SilverStripe\ORM\FieldType\DBHTMLText|string
+     */
+    protected function delegateToFormSet(array $handlers, $title, array $templates)
+    {
+
+        // Process each of the handlers
+        $results = array_map(
+            function ($handler) {
+                return $handler->handleRequest($this->getRequest(), \SilverStripe\ORM\DataModel::inst());
+            },
+            $handlers
         );
 
-        return $this->delegateToHandler(
-            $handler,
-            _t('SilverStripe\\Security\\Security.LOGIN', 'Log in'),
-            $this->getTemplatesFor('login')
+        // Aggregate all their forms, assuming they all return
+        $forms = [];
+        foreach ($results as $authName => $singleResult) {
+            // The result *must* be an array with a Form key
+            if (!is_array($singleResult) || !isset($singleResult['Form'])) {
+                user_error('Authenticator "' . $authName . '" doesn\'t support a tabbed login', E_USER_WARNING);
+                continue;
+            }
+
+            $forms[] = $singleResult['Form'];
+        }
+
+        if (!$forms) {
+            throw new \LogicException("No authenticators found compatible with a tabbed login");
+        }
+
+        return $this->renderWrappedController(
+            $title,
+            [
+                'Form' => $this->generateLoginFormSet($forms),
+            ],
+            $templates
         );
+
     }
 
     /**
      * Delegate to another RequestHandler, rendering any fragment arrays into an appropriate.
      * controller.
+     *
      * @param string $title The title of the form
-     * @param $template The template stack to render
+     * @param array $templates
+     * @return array|HTTPResponse|RequestHandler|\SilverStripe\ORM\FieldType\DBHTMLText|string
      */
     protected function delegateToHandler(RequestHandler $handler, $title, array $templates)
     {
-        // Process the result
         $result = $handler->handleRequest($this->getRequest(), \SilverStripe\ORM\DataModel::inst());
 
         // Return the customised controller - used to render in a Form
+        // Post requests are expected to be login posts, so they'll be handled downstairs
         if (is_array($result)) {
-            $controller = $this->getResponseController($title);
-
-            // if the controller calls Director::redirect(), this will break early
-            if (($response = $controller->getResponse()) && $response->isFinished()) {
-                return $response;
-            }
-
-            // Handle any form messages from validation, etc.
-            $messageType = '';
-            $message = $this->getLoginMessage($messageType);
-
-            // We've displayed the message in the form output, so reset it for the next run.
-            static::clearLoginMessage();
-
-            if ($message) {
-                $result["Content"] = DBField::create_field('HTMLFragment', $message);
-                $result["Message"] = DBField::create_field('HTMLFragment', $message);
-                $result["MessageType"] = $messageType;
-            }
-
-            return $controller->customise($result)->renderWith($templates);
-
-        // Return a complete result
-        } else {
-            return $result;
+            $result = $this->renderWrappedController($title, $result, $templates);
         }
 
-        /*
+        return $result;
+    }
 
-        TO DO: Implement multi-login-form support
+    /**
+     * Render the given fragments into a security page controller with the given title.
+     * @param $title string The title to give the security page
+     * @param $fragments A map of objects to render into the page, e.g. "Form"
+     * @param $templates An array of templates to use for the render
+     */
+    protected function renderWrappedController($title, array $fragments, array $templates)
+    {
+        $controller = $this->getResponseController($title);
 
-        $forms = $this->GetLoginForms();
-        if (!count($forms)) {
-            user_error(
-                'No login-forms found, please use Authenticator::register_authenticator() to add one',
-                E_USER_ERROR
-            );
+        // if the controller calls Director::redirect(), this will break early
+        if (($response = $controller->getResponse()) && $response->isFinished()) {
+            return $response;
         }
 
+        // Handle any form messages from validation, etc.
+        $messageType = '';
+        $message = $this->getLoginMessage($messageType);
 
-        // only display tabs when more than one authenticator is provided
-        // to save bandwidth and reduce the amount of custom styling needed
-        if (count($forms) > 1) {
-            $content = $this->generateLoginFormSet($forms);
-        } else {
-            $content = $forms[0]->forTemplate();
+        // We've displayed the message in the form output, so reset it for the next run.
+        static::clearLoginMessage();
+
+        if ($message) {
+            $messageResult = [
+                'Content'     => DBField::create_field('HTMLFragment', $message),
+                'Message'     => DBField::create_field('HTMLFragment', $message),
+                'MessageType' => $messageType
+            ];
+            $result = array_merge($fragments, $messageResult);
         }
 
-        */
+        return $controller->customise($fragments)->renderWith($templates);
     }
 
     public function basicauthlogin()
@@ -750,7 +826,6 @@ class Security extends Controller implements TemplateGlobalProvider
         $handler = $this->getAuthenticator()->getLostPasswordHandler(
             Controller::join_links($this->link(), 'lostpassword')
         );
-
 
         return $this->delegateToHandler(
             $handler,

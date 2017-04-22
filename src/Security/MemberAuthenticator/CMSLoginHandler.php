@@ -15,7 +15,7 @@ class CMSLoginHandler extends LoginHandler
      * @param array $data Submitted data
      * @return HTTPResponse
      */
-    public function dologin($data, $form, $request, $formHandler)
+    public function dologin($data, $formHandler)
     {
         if ($this->performLogin($data)) {
             return $this->logInUserAndRedirect($data);

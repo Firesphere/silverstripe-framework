@@ -14,12 +14,11 @@ use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\Forms\RequiredFields;
 use SilverStripe\ORM\ValidationResult;
-use SilverStripe\View\Requirements;
-
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 use SilverStripe\Security\RememberLoginHash;
 use SilverStripe\Security\LoginForm as BaseLoginForm;
+use SilverStripe\View\Requirements;
 
 /**
  * Log-in form for the "member" authentication method.
@@ -166,7 +165,7 @@ class LoginForm extends BaseLoginForm
     protected function getFormActions()
     {
         $actions = FieldList::create(
-            FormAction::create('dologin', _t('SilverStripe\\Security\\Member.BUTTONLOGIN', "Log in")),
+            FormAction::create('doLogin', _t('SilverStripe\\Security\\Member.BUTTONLOGIN', "Log in")),
             LiteralField::create(
                 'forgotPassword',
                 '<p id="ForgotPassword"><a href="' . Security::lost_password_url() . '">'

@@ -21,7 +21,8 @@ class Authenticator implements BaseAuthenticator
 
     public function supportedServices()
     {
-        return BaseAuthenticator::LOGIN || BaseAuthenticator::LOGOUT| BaseAuthenticator::CHANGE_PASSWORD
+        // Bitwise-OR of all the supported services, to make a bitmask
+        return BaseAuthenticator::LOGIN | BaseAuthenticator::LOGOUT | BaseAuthenticator::CHANGE_PASSWORD
             | BaseAuthenticator::RESET_PASSWORD | BaseAuthenticator::CMS_LOGIN;
     }
 
