@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\Security;
+namespace SilverStripe\Security\MemberAuthenticator;
 
 use SilverStripe\Control\Director;
 use SilverStripe\Control\Session;
@@ -16,6 +16,11 @@ use SilverStripe\Forms\RequiredFields;
 use SilverStripe\ORM\ValidationResult;
 use SilverStripe\View\Requirements;
 
+use SilverStripe\Security\Member;
+use SilverStripe\Security\Security;
+use SilverStripe\Security\RememberLoginHash;
+use SilverStripe\Security\LoginForm as BaseLoginForm;
+
 /**
  * Log-in form for the "member" authentication method.
  *
@@ -26,7 +31,7 @@ use SilverStripe\View\Requirements;
  *    allowing extensions to "veto" execution by returning FALSE.
  *    Arguments: $member containing the detected Member record
  */
-class MemberLoginForm extends LoginForm
+class LoginForm extends BaseLoginForm
 {
 
     /**
@@ -192,14 +197,6 @@ class MemberLoginForm extends LoginForm
         }
 
         return $this;
-    }
-
-    /**
-     * @return MemberLoginHandler
-     */
-    protected function buildRequestHandler()
-    {
-        return MemberLoginHandler::create($this);
     }
 
     /**
