@@ -231,44 +231,24 @@ class Security extends Controller implements TemplateGlobalProvider
      */
     public static function getAuthenticators()
     {
-        $authenticatorClasses = self::config()->authenticators;
-        $default = self::config()->default_authenticator;
-
-        if (!$authenticatorClasses) {
-            if ($default) {
-                $authenticatorClasses = [$default];
-            } else {
-                return [];
-            }
-        }
-
-        // put default authenticator first (mainly for tab-order on loginform)
-        // But only if there's no other authenticator
-        if (($key = array_search($default, $authenticatorClasses, true)) && count($$authenticatorClasses) > 1) {
-            unset($authenticatorClasses[$key]);
-            array_unshift($authenticatorClasses, $default);
-        }
+        $authenticators = self::config()->authenticators;
 
         return array_map(function ($class) {
             return Injector::inst()->get($class);
-        }, $authenticatorClasses);
+        }, $authenticators);
     }
 
     /**
      * Check if a given authenticator is registered
      *
-     * @param string $authenticator Name of the authenticator class to check
+     * @param string $authenticator The configured identifier of the authenicator
      * @return bool Returns TRUE if the authenticator is registered, FALSE
      *              otherwise.
      */
     public static function hasAuthenticator($authenticator)
     {
         $authenticators = self::config()->get('authenticators');
-        if (count($authenticators) === 0) {
-            $authenticators = [self::config()->get('default_authenticator')];
-        }
-
-        return in_array($authenticator, $authenticators, true);
+        return !empty($authenticators[$authenticator]);
     }
 
     /**
@@ -416,20 +396,18 @@ class Security extends Controller implements TemplateGlobalProvider
     /**
      * Get the selected authenticator for this request
      *
+     * @param $name string The identifier of the authenticator in your config
      * @return string Class name of Authenticator
      * @throws LogicException
      */
-    protected function getAuthenticator()
+    protected function getAuthenticator($name)
     {
-        $authenticator = $this->getRequest()->requestVar('AuthenticationMethod');
-        if ($authenticator && self::hasAuthenticator($authenticator)) {
-            return Injector::inst()->get($authenticator);
+        $authenticators = self::config()->authenticators;
 
-        } elseif ($authenticator !== '') {
-            $authenticators = self::getAuthenticators();
-            if (count($authenticators) > 0) {
-                return $authenticators[0];
-            }
+        if (!$name) $name = 'default';
+
+        if (isset($authenticators[$name])) {
+            return Injector::inst()->get($authenticators[$name]);
         }
 
         throw new LogicException('No valid authenticator found');
@@ -443,7 +421,7 @@ class Security extends Controller implements TemplateGlobalProvider
      */
     public function LoginForm()
     {
-        $authenticator = $this->getAuthenticator();
+        $authenticator = $this->getAuthenticator('default');
         if ($authenticator) {
             $handler = $authenticator->getLoginHandler($this->Link());
             return $handler->handleRequest($this->request, DataModel::inst());
@@ -823,7 +801,7 @@ class Security extends Controller implements TemplateGlobalProvider
      */
     public function lostpassword()
     {
-        $handler = $this->getAuthenticator()->getLostPasswordHandler(
+        $handler = $this->getAuthenticator('default')->getLostPasswordHandler(
             Controller::join_links($this->link(), 'lostpassword')
         );
 
