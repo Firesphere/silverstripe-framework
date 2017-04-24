@@ -94,13 +94,17 @@ class LoginHandler extends RequestHandler
      * @param LoginHandler $formHandler
      * @return HTTPResponse
      */
-    public function doLogin($data, $formHandler)
+    public function doLogin($data, $form)
     {
+        $failureMessage = null;
+
         // Successful login
-        if ($member = $this->checkLogin($data)) {
+        if ($member = $this->checkLogin($data, $failureMessage)) {
             $this->performLogin($member, $data);
             return $this->redirectAfterSuccessfulLogin();
         }
+
+        $form->sessionMessage($failureMessage, 'bad');
 
         // Failed login
 
@@ -110,9 +114,8 @@ class LoginHandler extends RequestHandler
             Session::set('SessionForms.MemberLoginForm.Remember', isset($data['Remember']));
         }
 
-        return $this->redirectBack();
         // Fail to login redirects back to form
-        return $formHandler->redirectBackToForm();
+        return $form->getRequestHandler()->redirectBackToForm();
     }
 
 
@@ -185,7 +188,8 @@ class LoginHandler extends RequestHandler
      */
     public function logout()
     {
-        return Security::singleton()->logout();
+        Security::singleton()->logout();
+        return $this->redirectBack();
     }
 
     /**
@@ -195,7 +199,7 @@ class LoginHandler extends RequestHandler
      * @return Member Returns the member object on successful authentication
      *                or NULL on failure.
      */
-    public function checkLogin($data)
+    public function checkLogin($data, &$message)
     {
         $message = null;
         $member = $this->authenticator->authenticate($data, $message);
@@ -203,8 +207,6 @@ class LoginHandler extends RequestHandler
             return $member;
 
         } else {
-            Security::setLoginMessage($message, ValidationResult::TYPE_ERROR);
-
             // No member, can't login
             $this->extend('authenticationFailed', $data);
             return null;

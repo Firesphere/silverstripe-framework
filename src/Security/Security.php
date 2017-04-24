@@ -339,7 +339,7 @@ class Security extends Controller implements TemplateGlobalProvider
             }
 
             Security::setLoginMessage($message, ValidationResult::TYPE_WARNING);
-            $loginResponse = (new Security())->login(new HTTPRequest());
+            $loginResponse = (new Security())->login(new HTTPRequest('GET', '/'));
             if ($loginResponse instanceof HTTPResponse) {
                 return $loginResponse;
             }

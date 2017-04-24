@@ -187,14 +187,14 @@ class SecurityTest extends FunctionalTest
         }
         $response = $this->getRecursive('SecurityTest_SecuredController');
         $this->assertContains(Convert::raw2xml("That page is secured."), $response->getBody());
-        $this->assertContains('<input type="submit" name="action_dologin"', $response->getBody());
+        $this->assertContains('<input type="submit" name="action_doLogin"', $response->getBody());
 
         // Non-logged in user should not be redirected, but instead shown the login form
         // No message/context is available as the user has not attempted to view the secured controller
         $response = $this->getRecursive('Security/login?BackURL=SecurityTest_SecuredController/');
         $this->assertNotContains(Convert::raw2xml("That page is secured."), $response->getBody());
         $this->assertNotContains(Convert::raw2xml("You don't have access to this page"), $response->getBody());
-        $this->assertContains('<input type="submit" name="action_dologin"', $response->getBody());
+        $this->assertContains('<input type="submit" name="action_doLogin"', $response->getBody());
 
         // BackURL with permission error (wrong permissions) should not redirect
         $this->logInAs('grouplessmember');
@@ -245,8 +245,7 @@ class SecurityTest extends FunctionalTest
             'LoginForm_LoginForm',
             null,
             array(
-                'AuthenticationMethod' => MemberAuthenticator::class,
-                'action_dologout' => 1,
+                'action_logout' => 1,
             )
         );
 
@@ -699,7 +698,7 @@ class SecurityTest extends FunctionalTest
                 'Email' => $email,
                 'Password' => $password,
                 'AuthenticationMethod' => MemberAuthenticator::class,
-                'action_dologin' => 1,
+                'action_doLogin' => 1,
             )
         );
     }
