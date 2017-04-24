@@ -339,7 +339,7 @@ class Security extends Controller implements TemplateGlobalProvider
             }
 
             Security::setLoginMessage($message, ValidationResult::TYPE_WARNING);
-            $loginResponse = $me->login();
+            $loginResponse = (new Security())->login(new HTTPRequest());
             if ($loginResponse instanceof HTTPResponse) {
                 return $loginResponse;
             }
@@ -1184,6 +1184,46 @@ class Security extends Controller implements TemplateGlobalProvider
         self::$database_is_ready = true;
 
         return true;
+    }
+
+    /**
+     * Resets the database_is_ready cache
+     */
+    public static function clear_database_is_ready()
+    {
+        self::$database_is_ready = null;
+        self::$force_database_is_ready = null;
+    }
+
+    /**
+     * For the database_is_ready call to return a certain value - used for testing
+     */
+    public static function force_database_is_ready($isReady)
+    {
+        self::$force_database_is_ready = $isReady;
+    }
+
+    /**
+     * Enable or disable recording of login attempts
+     * through the {@link LoginRecord} object.
+     *
+     * @deprecated 4.0 Use the "Security.login_recording" config setting instead
+     * @param boolean $bool
+     */
+    public static function set_login_recording($bool)
+    {
+        Deprecation::notice('4.0', 'Use the "Security.login_recording" config setting instead');
+        self::$login_recording = (bool)$bool;
+    }
+
+    /**
+     * @deprecated 4.0 Use the "Security.login_recording" config setting instead
+     * @return boolean
+     */
+    public static function login_recording()
+    {
+        Deprecation::notice('4.0', 'Use the "Security.login_recording" config setting instead');
+        return self::$login_recording;
     }
 
     /**
