@@ -96,9 +96,13 @@ class LoginHandler extends RequestHandler
      */
     public function doLogin($data, $formHandler)
     {
-        if ($this->performLogin($data)) {
-            return $this->logInUserAndRedirect($data, $formHandler);
+        // Successful login
+        if ($member = $this->checkLogin($data)) {
+            $this->performLogin($member, $data);
+            return $this->redirectAfterSuccessfulLogin();
         }
+
+        // Failed login
 
         /** @skipUpgrade */
         if (array_key_exists('Email', $data)) {
@@ -132,7 +136,7 @@ class LoginHandler extends RequestHandler
      * @param array $data
      * @return HTTPResponse
      */
-    protected function logInUserAndRedirect($data, $formHandler)
+    protected function redirectAfterSuccessfulLogin()
     {
         Session::clear('SessionForms.MemberLoginForm.Email');
         Session::clear('SessionForms.MemberLoginForm.Remember');
@@ -156,13 +160,6 @@ class LoginHandler extends RequestHandler
 
         // Redirect the user to the page where they came from
         if ($member) {
-            if (!empty($data['Remember'])) {
-                Session::set('SessionForms.MemberLoginForm.Remember', '1');
-                $member->logIn(true);
-            } else {
-                $member->logIn();
-            }
-
             // Welcome message
             $message = _t(
                 'SilverStripe\\Security\\Member.WELCOMEBACK',
@@ -198,22 +195,35 @@ class LoginHandler extends RequestHandler
      * @return Member Returns the member object on successful authentication
      *                or NULL on failure.
      */
-    public function performLogin($data)
+    public function checkLogin($data)
     {
         $message = null;
         $member = $this->authenticator->authenticate($data, $message);
         if ($member) {
-            $member->LogIn(isset($data['Remember']));
             return $member;
+
         } else {
             Security::setLoginMessage($message, ValidationResult::TYPE_ERROR);
-        }
 
-        // No member, can't login
-        $this->extend('authenticationFailed', $data);
-        return null;
+            // No member, can't login
+            $this->extend('authenticationFailed', $data);
+            return null;
+
+        }
     }
 
+    /**
+     * Try to authenticate the user
+     *
+     * @param array $data Submitted data
+     * @return Member Returns the member object on successful authentication
+     *                or NULL on failure.
+     */
+    public function performLogin($member, $data)
+    {
+        $member->LogIn(isset($data['Remember']));
+        return $member;
+    }
     /**
      * Invoked if password is expired and must be changed
      *

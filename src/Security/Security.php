@@ -338,11 +338,7 @@ class Security extends Controller implements TemplateGlobalProvider
                 $message = $messageSet['default'];
             }
 
-            // Somewhat hackish way to render a login form with an error message.
-//            $me = new Security();
-//            $form = $me->LoginForm();
-//            $form->sessionMessage($message, ValidationResult::TYPE_WARNING);
-//            Session::set('MemberLoginForm.force_message', 1);
+            Security::setLoginMessage($message, ValidationResult::TYPE_WARNING);
             $loginResponse = $me->login();
             if ($loginResponse instanceof HTTPResponse) {
                 return $loginResponse;
@@ -644,60 +640,53 @@ class Security extends Controller implements TemplateGlobalProvider
         $link = $this->link("login");
 
         // Delegate to a single handler - Security/login/<authname>/...
-        if ($authenticatorName = $request->param('ID')) {
+        if ($name = $request->param('ID')) {
             $request->shift();
 
-            $authenticator = $this->getAuthenticator($authenticatorName);
+            $authenticator = $this->getAuthenticator($name);
             if (!$authenticator) {
-                throw new HTTPResponse_Exception(404, 'No authenticator "' . $authenticatorName . '"');
+                throw new HTTPResponse_Exception(404, 'No authenticator "' . $name . '"');
             }
 
-            $handler = $authenticator->getLoginHandler(Controller::join_links($link, $authenticatorName));
-
-            return $this->delegateToHandler(
-                $handler,
-                _t('Security.LOGIN', 'Log in'),
-                $this->getTemplatesFor('login')
-            );
+            $authenticators = [ $name => $authenticator ];
 
         // Delegate to all of them, building a tabbed view - Security/login
         } else {
-            $handlers = $this->getAuthenticators();
-            array_walk(
-                $handlers,
-                function (&$auth, $name) use ($link) {
-                    $auth = $auth->getLoginHandler(Controller::join_links($link, $name));
-                }
-            );
-
-            if (count($handlers) === 1) {
-                return $this->delegateToHandler(
-                    array_values($handlers)[0],
-                    _t('Security.LOGIN', 'Log in'),
-                    $this->getTemplatesFor('login')
-                );
-
-            } else {
-                return $this->delegateToFormSet(
-                    $handlers,
-                    _t('Security.LOGIN', 'Log in'),
-                    $this->getTemplatesFor('login')
-                );
-            }
+            $authenticators = $this->getAuthenticators();
         }
 
+        $handlers = $authenticators;
+        array_walk(
+            $handlers,
+            function (&$auth, $name) use ($link) {
+                $auth = $auth->getLoginHandler(Controller::join_links($link, $name));
+            }
+        );
+
+        return $this->delegateToMultipleHandlers(
+            $handlers,
+            _t('Security.LOGIN', 'Log in'),
+            $this->getTemplatesFor('login')
+        );
     }
 
     /**
      * Delegate to an number of handlers, extracting their forms and rendering a tabbed form-set.
      * This is used to built the log-in page where there are multiple authenticators active.
      *
+     * If a single handler is passed, delegateToHandler() will be called instead
+     *
      * @param string $title The title of the form
      * @param array $templates
      * @return array|HTTPResponse|RequestHandler|\SilverStripe\ORM\FieldType\DBHTMLText|string
      */
-    protected function delegateToFormSet(array $handlers, $title, array $templates)
+    protected function delegateToMultipleHandlers(array $handlers, $title, array $templates)
     {
+
+        // Simpler case for a single authenticator
+        if (count($handlers) === 1) {
+            return $this->delegateToHandler(array_values($handlers)[0], $title, $templates);
+        }
 
         // Process each of the handlers
         $results = array_map(
