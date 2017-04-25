@@ -220,9 +220,63 @@ class Security extends Controller implements TemplateGlobalProvider
      */
     protected static $database_is_ready = false;
 
+    /**
+     * @var array available authenticators
+     */
     protected static $authenticators = [];
 
+    /**
+     * @var string Default authenticator
+     */
     protected static $default_authenticator = MemberAuthenticator\Authenticator::class;
+
+    /**
+     * @inheritdoc
+     */
+    protected function init()
+    {
+        parent::init();
+
+        // Prevent clickjacking, see https://developer.mozilla.org/en-US/docs/HTTP/X-Frame-Options
+        $frameOptions = $this->config()->get('frame_options');
+        if ($frameOptions) {
+            $this->getResponse()->addHeader('X-Frame-Options', $frameOptions);
+        }
+
+        // Prevent search engines from indexing the login page
+        $robotsTag = $this->config()->get('robots_tag');
+        if ($robotsTag) {
+            $this->getResponse()->addHeader('X-Robots-Tag', $robotsTag);
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function index()
+    {
+        return $this->httpError(404); // no-op
+    }
+
+    /**
+     * Get the selected authenticator for this request
+     *
+     * @param $name string The identifier of the authenticator in your config
+     * @return string Class name of Authenticator
+     * @throws LogicException
+     */
+    protected function getAuthenticator($name)
+    {
+        $authenticators = self::config()->authenticators;
+
+        if (!$name) $name = 'default';
+
+        if (isset($authenticators[$name])) {
+            return Injector::inst()->get($authenticators[$name]);
+        }
+
+        throw new LogicException('No valid authenticator found');
+    }
 
     /**
      * Get all registered authenticators
@@ -365,48 +419,6 @@ class Security extends Controller implements TemplateGlobalProvider
             Security::config()->uninherited('login_url'),
             "?BackURL=" . urlencode($_SERVER['REQUEST_URI'])
         ));
-    }
-
-    protected function init()
-    {
-        parent::init();
-
-        // Prevent clickjacking, see https://developer.mozilla.org/en-US/docs/HTTP/X-Frame-Options
-        $frameOptions = $this->config()->get('frame_options');
-        if ($frameOptions) {
-            $this->getResponse()->addHeader('X-Frame-Options', $frameOptions);
-        }
-
-        // Prevent search engines from indexing the login page
-        $robotsTag = $this->config()->get('robots_tag');
-        if ($robotsTag) {
-            $this->getResponse()->addHeader('X-Robots-Tag', $robotsTag);
-        }
-    }
-
-    public function index()
-    {
-        return $this->httpError(404); // no-op
-    }
-
-    /**
-     * Get the selected authenticator for this request
-     *
-     * @param $name string The identifier of the authenticator in your config
-     * @return string Class name of Authenticator
-     * @throws LogicException
-     */
-    protected function getAuthenticator($name)
-    {
-        $authenticators = self::config()->authenticators;
-
-        if (!$name) $name = 'default';
-
-        if (isset($authenticators[$name])) {
-            return Injector::inst()->get($authenticators[$name]);
-        }
-
-        throw new LogicException('No valid authenticator found');
     }
 
     /**
@@ -628,7 +640,9 @@ class Security extends Controller implements TemplateGlobalProvider
      * For multiple authenticators, Security_MultiAuthenticatorLogin is used.
      * See getTemplatesFor and getIncludeTemplate for how to override template logic
      *
-     * @return string|HTTPResponse Returns the "login" page as HTML code.
+     * @param $request
+     * @return HTTPResponse|string Returns the "login" page as HTML code.
+     * @throws HTTPResponse_Exception
      */
     public function login($request)
     {
@@ -745,9 +759,10 @@ class Security extends Controller implements TemplateGlobalProvider
 
     /**
      * Render the given fragments into a security page controller with the given title.
-     * @param $title string The title to give the security page
-     * @param $fragments A map of objects to render into the page, e.g. "Form"
-     * @param $templates An array of templates to use for the render
+     * @param string $title string The title to give the security page
+     * @param array $fragments A map of objects to render into the page, e.g. "Form"
+     * @param array $templates An array of templates to use for the render
+     * @return HTTPResponse|\SilverStripe\ORM\FieldType\DBHTMLText
      */
     protected function renderWrappedController($title, array $fragments, array $templates)
     {
@@ -771,7 +786,7 @@ class Security extends Controller implements TemplateGlobalProvider
                 'Message'     => DBField::create_field('HTMLFragment', $message),
                 'MessageType' => $messageType
             ];
-            $result = array_merge($fragments, $messageResult);
+            $fragments = array_merge($fragments, $messageResult);
         }
 
         return $controller->customise($fragments)->renderWith($templates);
@@ -799,26 +814,6 @@ class Security extends Controller implements TemplateGlobalProvider
             _t('SilverStripe\\Security\\Security.LOSTPASSWORDHEADER', 'Lost Password'),
             $this->getTemplatesFor('lostpassword')
         );
-    }
-
-    /**
-     * Create a link to the password reset form.
-     *
-     * GET parameters used:
-     * - m: member ID
-     * - t: plaintext token
-     *
-     * @param Member $member Member object associated with this link.
-     * @param string $autologinToken The auto login token.
-     * @return string
-     */
-    public static function getPasswordResetLink($member, $autologinToken)
-    {
-        $autologinToken = urldecode($autologinToken);
-        $selfControllerClass = __CLASS__;
-        /** @var static $selfController */
-        $selfController = new $selfControllerClass();
-        return $selfController->Link('changepassword') . "?m={$member->ID}&t=$autologinToken";
     }
 
     /**
@@ -906,6 +901,26 @@ class Security extends Controller implements TemplateGlobalProvider
         }
 
         return $customisedController->renderWith($this->getTemplatesFor('changepassword'));
+    }
+
+    /**
+     * Create a link to the password reset form.
+     *
+     * GET parameters used:
+     * - m: member ID
+     * - t: plaintext token
+     *
+     * @param Member $member Member object associated with this link.
+     * @param string $autologinToken The auto login token.
+     * @return string
+     */
+    public static function getPasswordResetLink($member, $autologinToken)
+    {
+        $autologinToken = urldecode($autologinToken);
+        $selfControllerClass = __CLASS__;
+        /** @var static $selfController */
+        $selfController = new $selfControllerClass();
+        return $selfController->Link('changepassword') . "?m={$member->ID}&t=$autologinToken";
     }
 
     /**
