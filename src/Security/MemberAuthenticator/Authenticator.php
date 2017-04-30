@@ -4,7 +4,6 @@ namespace SilverStripe\Security\MemberAuthenticator;
 
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Session;
-use SilverStripe\Forms\Form;
 use SilverStripe\ORM\ValidationResult;
 use InvalidArgumentException;
 use SilverStripe\Security\Authenticator as BaseAuthenticator;
@@ -24,7 +23,7 @@ class Authenticator implements BaseAuthenticator
     {
         // Bitwise-OR of all the supported services, to make a bitmask
         return BaseAuthenticator::LOGIN | BaseAuthenticator::LOGOUT | BaseAuthenticator::CHANGE_PASSWORD
-            | BaseAuthenticator::RESET_PASSWORD | BaseAuthenticator::CMS_LOGIN;
+            | BaseAuthenticator::RESET_PASSWORD;
     }
 
     /**
@@ -50,39 +49,24 @@ class Authenticator implements BaseAuthenticator
     /**
      * Attempt to find and authenticate member if possible from the given data
      *
-     * @param array $data
-     * @param Form $form
+     * @param array $data Form submitted data
+     * @param $message
      * @param bool &$success Success flag
+     * @param null|Member $member If the parent method already identified the member, it can be passed in
      * @return Member Found member, regardless of successful login
      */
-    protected function authenticateMember($data, &$message, &$success)
+    protected function authenticateMember($data, &$message, &$success, $member = null)
     {
         // Default success to false
         $success = false;
-
-        // Attempt to identify by temporary ID
-        $member = null;
-        $email = null;
-        if (!empty($data['tempid'])) {
-            // Find user by tempid, in case they are re-validating an existing session
-            $member = Member::member_from_tempid($data['tempid']);
-            if ($member) {
-                $email = $member->Email;
-            }
-        }
-
-        // Otherwise, get email from posted value instead
-        /** @skipUpgrade */
-        if (!$member && !empty($data['Email'])) {
-            $email = $data['Email'];
-        }
-
+        $email = !empty($data['Email']) ? $data['Email'] : null ;
+        
         // Check default login (see Security::setDefaultAdmin())
         $asDefaultAdmin = $email === Security::default_admin_username();
         if ($asDefaultAdmin) {
             // If logging is as default admin, ensure record is setup correctly
             $member = Member::default_admin();
-            $success = !$member->isLockedOut() && Security::check_default_admin($email, $data['Password']);
+            $success = $member->canLogin()->isValid() && Security::check_default_admin($email, $data['Password']);
             //protect against failed login
             if ($success) {
                 return $member;
@@ -92,8 +76,9 @@ class Authenticator implements BaseAuthenticator
         // Attempt to identify user by email
         if (!$member && $email) {
             // Find user by email
+            /** @var Member $member */
             $member = Member::get()
-                ->filter(Member::config()->unique_identifier_field, $email)
+                ->filter([Member::config()->get('unique_identifier_field') => $email])
                 ->first();
         }
 
@@ -120,7 +105,7 @@ class Authenticator implements BaseAuthenticator
                 $result->getMessages()
             ));
         } else {
-            if ($member) {
+            if ($member) { // How can success be true and member false?
                 $member->registerSuccessfulLogin();
             }
         }
@@ -137,7 +122,7 @@ class Authenticator implements BaseAuthenticator
      */
     protected function recordLoginAttempt($data, $member, $success)
     {
-        if (!Security::config()->login_recording) {
+        if (!Security::config()->get('login_recording')) {
             return;
         }
 
@@ -148,7 +133,7 @@ class Authenticator implements BaseAuthenticator
             throw new InvalidArgumentException("Bad email passed to MemberAuthenticator::authenticate(): $email");
         }
 
-        $attempt = new LoginAttempt();
+        $attempt = LoginAttempt::create();
         if ($success) {
             // successful login (member is existing with matching password)
             $attempt->MemberID = $member->ID;
@@ -196,10 +181,5 @@ class Authenticator implements BaseAuthenticator
     public function getLoginHandler($link)
     {
         return LoginHandler::create($link, $this);
-    }
-
-    public function getCMSLoginHandler($link)
-    {
-        return CMSMemberLoginHandler::create($controller, self::class, "LoginForm");
     }
 }

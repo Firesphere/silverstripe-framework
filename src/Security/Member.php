@@ -382,7 +382,7 @@ class Member extends DataObject implements TemplateGlobalProvider
      *
      * @return bool
      */
-    public function isLockedOut()
+    protected function isLockedOut()
     {
         if (!$this->LockedOutUntil) {
             return false;
@@ -499,7 +499,7 @@ class Member extends DataObject implements TemplateGlobalProvider
         $this->write();
 
         // Audit logging hook
-        $this->extend('memberLoggedIn');
+        $this->extend('afterMemberLoggedIn');
     }
 
     /**

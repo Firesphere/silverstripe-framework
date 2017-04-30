@@ -1169,8 +1169,8 @@ class MemberTest extends FunctionalTest
                 'Failed to increment $member->FailedLoginCount'
             );
 
-            $this->assertFalse(
-                $member->isLockedOut(),
+            $this->assertTrue(
+                $member->canLogin()->isValid(),
                 "Member has been locked out too early"
             );
         }
