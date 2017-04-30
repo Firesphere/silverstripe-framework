@@ -85,6 +85,7 @@ class BasicAuth
 
         $member = null;
         if (isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW'])) {
+            /** @var Authenticator $authenticator */
             $authenticator = Injector::inst()->get(Authenticator::class);
 
             $member = $authenticator->authenticate([
