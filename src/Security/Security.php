@@ -471,6 +471,12 @@ class Security extends Controller implements TemplateGlobalProvider
     /**
      * Log the currently logged in user out
      *
+     * Logging out without ID-parameter in the URL, will log the user out of all applicable Authenticators.
+     *
+     * Adding an ID will only log the user out of that Authentication method.
+     *
+     * Logging out of Default will <i>always</i> completely log out the user.
+     *
      * @param bool $redirect Redirect the user back to where they came.
      *                       - If it's false, the code calling logout() is
      *                         responsible for sending the user where-ever
@@ -479,14 +485,43 @@ class Security extends Controller implements TemplateGlobalProvider
      */
     public function logout($redirect = true)
     {
+        $this->extend('beforeMemberLoggedOut');
+        $request = $this->getRequest();
         $member = Member::currentUser();
-        if ($member) {
-            $member->logOut();
+        // Reasoning for (now) to not go with a full LoginHandler call, is to not make it circular
+        // re-sending the request forward to the authenticator. In the case of logout, I think it would be
+        // overkill.
+        if (($name = $request->param('ID')) && self::hasAuthenticator($request->param('ID'))){
+            /** @var Authenticator $authenticator */
+            $authenticator = $this->getAuthenticator($request->param('ID'));
+            if($authenticator->doLogOut($member) !== true) {
+                $this->extend('failureMemberLoggedOut', $authenticator);
+                return $this->redirectBack();
+            }
+            $this->extend('successMemberLoggedOut', $authenticator);
+        } else {
+            $authenticators = static::getAuthenticators(Authenticator::LOGOUT);
+            /**
+             * @var string $name
+             * @var Authenticator $authenticator
+             */
+            foreach ($authenticators as $name => $authenticator) {
+                if ($authenticator->logOut($member) !== true) {
+                    $this->extend('failureMemberLoggedOut', $authenticator);
+                    // Break on first log out failure(?)
+                    return $this->redirectBack();
+                }
+                $this->extend('successMemberLoggedOut', $authenticator);
+            }
         }
+        // Member is successfully logged out. Write possible changes to the database.
+        $member->write();
+        $this->extend('afterMemberLoggedOut');
 
         if ($redirect && (!$this->getResponse()->isFinished())) {
             return $this->redirectBack();
         }
+
         return null;
     }
 

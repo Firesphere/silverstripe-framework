@@ -627,40 +627,6 @@ class Member extends DataObject implements TemplateGlobalProvider
     }
 
     /**
-     * Logs this member out.
-     */
-    public function logOut()
-    {
-        $this->extend('beforeMemberLoggedOut');
-
-        Session::clear("loggedInAs");
-        if (Member::config()->login_marker_cookie) {
-            Cookie::set(Member::config()->login_marker_cookie, null, 0);
-        }
-
-        Session::destroy();
-
-        $this->extend('memberLoggedOut');
-
-        // Clears any potential previous hashes for this member
-        RememberLoginHash::clear($this, Cookie::get('alc_device'));
-
-        Cookie::set('alc_enc', null); // // Clear the Remember Me cookie
-        Cookie::force_expiry('alc_enc');
-        Cookie::set('alc_device', null);
-        Cookie::force_expiry('alc_device');
-
-        // Switch back to live in order to avoid infinite loops when
-        // redirecting to the login screen (if this login screen is versioned)
-        Session::clear('readingMode');
-
-        $this->write();
-
-        // Audit logging hook
-        $this->extend('memberLoggedOut');
-    }
-
-    /**
      * Utility for generating secure password hashes for this member.
      *
      * @param string $string

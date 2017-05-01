@@ -80,4 +80,13 @@ interface Authenticator
      * @return array
      */
 //    public function getAuthenticateFields();
+
+    /**
+     * Log the member out of this Authentication method.
+     *
+     * @param Member $member by reference, to allow for multiple actions on the member with a single write
+     * @return boolean|Member if logout was unsuccessfull, return true, otherwise, the member is returned
+     */
+    public function doLogOut(&$member);
+
 }
