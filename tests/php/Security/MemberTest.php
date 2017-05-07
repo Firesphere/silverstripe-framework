@@ -4,6 +4,7 @@ namespace SilverStripe\Security\Tests;
 
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\Object;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\FunctionalTest;
 use SilverStripe\Control\Cookie;
 use SilverStripe\i18n\i18n;
@@ -16,10 +17,12 @@ use SilverStripe\Security\Security;
 use SilverStripe\Security\MemberPassword;
 use SilverStripe\Security\Group;
 use SilverStripe\Security\Permission;
+use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\PasswordEncryptor_Blowfish;
 use SilverStripe\Security\RememberLoginHash;
 use SilverStripe\Security\Member_Validator;
 use SilverStripe\Security\Tests\MemberTest\FieldsExtension;
+use SilverStripe\Control\HTTPRequest;
 
 class MemberTest extends FunctionalTest
 {
@@ -541,27 +544,25 @@ class MemberTest extends FunctionalTest
         $member = $this->objFromFixture(Member::class, 'test');
         $member2 = $this->objFromFixture(Member::class, 'staffmember');
 
-        $this->session()->inst_set('loggedInAs', null);
-
         /* Not logged in, you can't view, delete or edit the record */
         $this->assertFalse($member->canView());
         $this->assertFalse($member->canDelete());
         $this->assertFalse($member->canEdit());
 
         /* Logged in users can edit their own record */
-        $this->session()->inst_set('loggedInAs', $member->ID);
+        $this->logInAs($member);
         $this->assertTrue($member->canView());
         $this->assertFalse($member->canDelete());
         $this->assertTrue($member->canEdit());
 
         /* Other uses cannot view, delete or edit others records */
-        $this->session()->inst_set('loggedInAs', $member2->ID);
+        $this->logInAs($member2);
         $this->assertFalse($member->canView());
         $this->assertFalse($member->canDelete());
         $this->assertFalse($member->canEdit());
 
         $this->addExtensions($extensions);
-        $this->session()->inst_set('loggedInAs', null);
+        $this->logOut();
     }
 
     public function testAuthorisedMembersCanManipulateOthersRecords()
@@ -571,17 +572,18 @@ class MemberTest extends FunctionalTest
         $member2 = $this->objFromFixture(Member::class, 'staffmember');
 
         /* Group members with SecurityAdmin permissions can manipulate other records */
-        $this->session()->inst_set('loggedInAs', $member->ID);
+        $this->logInAs($member);
         $this->assertTrue($member2->canView());
         $this->assertTrue($member2->canDelete());
         $this->assertTrue($member2->canEdit());
 
         $this->addExtensions($extensions);
-        $this->session()->inst_set('loggedInAs', null);
+        $this->logOut();
     }
 
     public function testExtendedCan()
     {
+
         $extensions = $this->removeExtensions(Object::get_extensions(Member::class));
         $member = $this->objFromFixture(Member::class, 'test');
 
@@ -678,12 +680,12 @@ class MemberTest extends FunctionalTest
             'Adding new admin group relation is not allowed for non-admin members'
         );
 
-        $this->session()->inst_set('loggedInAs', $adminMember->ID);
+        $this->logInAs($adminMember);
         $this->assertTrue(
             $staffMember->onChangeGroups(array($newAdminGroup->ID)),
             'Adding new admin group relation is allowed for normal users, when granter is logged in as admin'
         );
-        $this->session()->inst_set('loggedInAs', null);
+        $this->logOut();
 
         $this->assertTrue(
             $adminMember->onChangeGroups(array($newAdminGroup->ID)),
@@ -733,7 +735,7 @@ class MemberTest extends FunctionalTest
         );
 
         // Test staff member can be added if they are already admin
-        $this->session()->inst_set('loggedInAs', null);
+        $this->logOut();
         $this->assertFalse($adminMember->inGroup($newAdminGroup));
         $adminMember->Groups()->add($newAdminGroup);
         $this->assertTrue(
@@ -886,7 +888,8 @@ class MemberTest extends FunctionalTest
     {
         $m1 = $this->objFromFixture(Member::class, 'grouplessmember');
 
-        $m1->login(true);
+        Injector::inst()->get(IdentityStore::class)->logIn($m1, true, new HTTPRequest('GET', '/'));
+
         $hashes = RememberLoginHash::get()->filter('MemberID', $m1->ID);
         $this->assertEquals($hashes->count(), 1);
         $firstHash = $hashes->first();
@@ -901,7 +904,8 @@ class MemberTest extends FunctionalTest
 */
         $m1 = $this->objFromFixture(Member::class, 'noexpiry');
 
-        $m1->logIn(true);
+        Injector::inst()->get(IdentityStore::class)->logIn($m1, true, new HTTPRequest('GET', '/'));
+
         $firstHash = RememberLoginHash::get()->filter('MemberID', $m1->ID)->first();
         $this->assertNotNull($firstHash);
 
@@ -928,7 +932,7 @@ class MemberTest extends FunctionalTest
         );
         $this->assertContains($message, $response->getBody());
 
-        $this->session()->inst_set('loggedInAs', null);
+        $this->logOut();
 
         // A wrong token or a wrong device ID should not let us autologin
         $response = $this->get(
@@ -936,7 +940,7 @@ class MemberTest extends FunctionalTest
             $this->session(),
             null,
             array(
-                'alc_enc' => $m1->ID.':'.str_rot13($token),
+                'alc_enc' => $m1->ID.':asdfasd'.str_rot13($token),
                 'alc_device' => $firstHash->DeviceID
             )
         );
@@ -979,7 +983,7 @@ class MemberTest extends FunctionalTest
  * @var Member $m1
 */
         $m1 = $this->objFromFixture(Member::class, 'noexpiry');
-        $m1->logIn(true);
+        Injector::inst()->get(IdentityStore::class)->logIn($m1, true, new HTTPRequest('GET', '/'));
         $firstHash = RememberLoginHash::get()->filter('MemberID', $m1->ID)->first();
         $this->assertNotNull($firstHash);
 
@@ -1009,7 +1013,7 @@ class MemberTest extends FunctionalTest
         );
         $this->assertContains($message, $response->getBody());
 
-        $this->session()->inst_set('loggedInAs', null);
+        $this->logOut();
 
         // re-generates the hash so we can get the token
         $firstHash->Hash = $firstHash->getNewHash($m1);
@@ -1029,7 +1033,7 @@ class MemberTest extends FunctionalTest
             )
         );
         $this->assertNotContains($message, $response->getBody());
-        $this->session()->inst_set('loggedInAs', null);
+        $this->logOut();
         DBDatetime::clear_mock_now();
     }
 
@@ -1038,10 +1042,10 @@ class MemberTest extends FunctionalTest
         $m1 = $this->objFromFixture(Member::class, 'noexpiry');
 
         // First device
-        $m1->login(true);
+        Injector::inst()->get(IdentityStore::class)->logIn($m1, true, new HTTPRequest('GET', '/'));
         Cookie::set('alc_device', null);
         // Second device
-        $m1->login(true);
+        Injector::inst()->get(IdentityStore::class)->logIn($m1, true, new HTTPRequest('GET', '/'));
 
         // Hash of first device
         $firstHash = RememberLoginHash::get()->filter('MemberID', $m1->ID)->first();
@@ -1082,7 +1086,7 @@ class MemberTest extends FunctionalTest
         );
         $this->assertContains($message, $response->getBody());
 
-        $this->session()->inst_set('loggedInAs', null);
+        $this->logOut();
 
         // Accessing the login page from the second device
         $response = $this->get(
@@ -1114,7 +1118,7 @@ class MemberTest extends FunctionalTest
 
         // Logging out from any device when all login hashes should be removed
         RememberLoginHash::config()->update('logout_across_devices', true);
-        $m1->login(true);
+        Injector::inst()->get(IdentityStore::class)->logIn($m1, true, new HTTPRequest('GET', '/'));
         $response = $this->get('Security/logout', $this->session());
         $this->assertEquals(
             RememberLoginHash::get()->filter('MemberID', $m1->ID)->count(),
