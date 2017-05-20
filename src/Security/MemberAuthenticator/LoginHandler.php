@@ -3,10 +3,12 @@
 namespace SilverStripe\Security\MemberAuthenticator;
 
 use SilverStripe\Control\Controller;
+use SilverStripe\Control\Cookie;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Control\Session;
 use SilverStripe\Control\RequestHandler;
 use SilverStripe\ORM\ValidationResult;
+use SilverStripe\Security\RememberLoginHash;
 use SilverStripe\Security\Security;
 use SilverStripe\Security\Member;
 use SilverStripe\Core\Injector\Injector;
@@ -119,7 +121,6 @@ class LoginHandler extends RequestHandler
         return $form->getRequestHandler()->redirectBackToForm();
     }
 
-
     public function getReturnReferer()
     {
         return $this->link();
@@ -178,22 +179,6 @@ class LoginHandler extends RequestHandler
     }
 
     /**
-     * Log out form handler method
-     *
-     * This method is called when the user clicks on "logout" on the form
-     * created when the parameter <i>$checkCurrentUser</i> of the
-     * {@link __construct constructor} was set to TRUE and the user was
-     * currently logged in.
-     *
-     * @return HTTPResponse
-     */
-    public function logout()
-    {
-        Security::singleton()->logout();
-        return $this->redirectBack();
-    }
-
-    /**
      * Try to authenticate the user
      *
      * @param array $data Submitted data
@@ -206,12 +191,10 @@ class LoginHandler extends RequestHandler
         $member = $this->authenticator->authenticate($data, $message);
         if ($member) {
             return $member;
-
         } else {
             // No member, can't login
             $this->extend('authenticationFailed', $data);
             return null;
-
         }
     }
 

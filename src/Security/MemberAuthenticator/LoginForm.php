@@ -87,7 +87,9 @@ class LoginForm extends BaseLoginForm
             $backURL = Session::get('BackURL');
         }
 
-        if ($checkCurrentUser && Member::currentUser() && Member::logged_in_session_exists()) {
+        if ($checkCurrentUser && Security::getCurrentUser() && Member::logged_in_session_exists()) {
+            // @todo find a more elegant way to handle this
+            $logoutAction = Security::logout_url();
             $fields = FieldList::create(
                 HiddenField::create("AuthenticationMethod", null, $this->authenticator_class, $this)
             );
@@ -112,6 +114,9 @@ class LoginForm extends BaseLoginForm
 
         parent::__construct($controller, $name, $fields, $actions);
 
+        if (isset($logoutAction)) {
+            $this->setFormAction($logoutAction);
+        }
         $this->setValidator(RequiredFields::create(self::config()->get('required_fields')));
     }
 

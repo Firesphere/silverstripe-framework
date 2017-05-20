@@ -228,7 +228,7 @@ class SecurityTest extends FunctionalTest
         $member = DataObject::get_one(Member::class);
 
         /* Log in with any user that we can find */
-        $this->session()->inst_set('loggedInAs', $member->ID);
+        Security::setCurrentUser($member);
 
         /* View the Security/login page */
         $response = $this->get(Config::inst()->get(Security::class, 'login_url'));
@@ -254,7 +254,7 @@ class SecurityTest extends FunctionalTest
         $this->assertNotNull($response->getBody(), 'There is body content on the page');
 
         /* Log the user out */
-        $this->session()->inst_set('loggedInAs', null);
+        Security::setCurrentUser(null);
     }
 
     public function testMemberIDInSessionDoesntExistInDatabaseHasToLogin()
