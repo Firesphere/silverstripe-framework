@@ -2,7 +2,9 @@
 
 namespace SilverStripe\Security\Tests;
 
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\Security\Authenticator;
 use SilverStripe\Security\Group;
 use SilverStripe\Security\MemberCsvBulkLoader;
 use SilverStripe\Security\Member;
@@ -95,7 +97,14 @@ class MemberCsvBulkLoaderTest extends SapphireTest
 
         // TODO Direct getter doesn't work, wtf!
         $this->assertEquals(Security::config()->password_encryption_algorithm, $member->getField('PasswordEncryption'));
-        $result = $member->checkPassword('mypassword');
+        $authenticators = Security::singleton()->getApplicableAuthenticators(Authenticator::CHANGE_PASSWORD);
+        // With a valid user and password, check the password is correct
+        foreach ($authenticators as $authenticator) {
+            $result = $authenticator->checkPassword($member, 'mypassword');
+            if (!$result->isValid()) {
+                break;
+            }
+        }
         $this->assertTrue($result->isValid());
     }
 }

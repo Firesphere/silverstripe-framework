@@ -202,7 +202,7 @@ class ChangePasswordHandler extends RequestHandler
         // The user was logged in, check the current password
         if ($member && (
                 empty($data['OldPassword']) ||
-                !$member->checkPassword($data['OldPassword'])->isValid()
+                !$this->authenticator->checkPassword($member, $data['OldPassword'])->isValid()
             )
         ) {
             $form->sessionMessage(

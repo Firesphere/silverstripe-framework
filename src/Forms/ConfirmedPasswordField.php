@@ -2,8 +2,10 @@
 
 namespace SilverStripe\Forms;
 
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectInterface;
+use SilverStripe\Security\Authenticator;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 use SilverStripe\View\Requirements;
@@ -518,19 +520,22 @@ class ConfirmedPasswordField extends FormField
                 return false;
             }
 
+            $authenticators = Security::singleton()->getApplicableAuthenticators(Authenticator::CHANGE_PASSWORD);
             // With a valid user and password, check the password is correct
-            $checkResult = $member->checkPassword($this->currentPasswordValue);
-            if (!$checkResult->isValid()) {
-                $validator->validationError(
-                    $name,
-                    _t(
-                        'SilverStripe\\Forms\\ConfirmedPasswordField.CURRENT_PASSWORD_ERROR',
-                        "The current password you have entered is not correct."
-                    ),
-                    "validation"
-                );
-                return false;
-            }
+            foreach($authenticators as $authenticator) {
+                $checkResult = $authenticator->checkPassword($member, $this->currentPasswordValue);
+                if (!$checkResult->isValid()) {
+                    $validator->validationError(
+                        $name,
+                        _t(
+                            'SilverStripe\\Forms\\ConfirmedPasswordField.CURRENT_PASSWORD_ERROR',
+                            "The current password you have entered is not correct."
+                        ),
+                        "validation"
+                    );
+                    return false;
+                }            }
+
         }
 
         return true;

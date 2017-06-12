@@ -10,6 +10,7 @@ use SilverStripe\i18n\i18n;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
 use SilverStripe\ORM\FieldType\DBDatetime;
+use SilverStripe\Security\Authenticator;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\MemberAuthenticator\SessionAuthenticationHandler;
 use SilverStripe\Security\Security;
@@ -130,7 +131,14 @@ class MemberTest extends FunctionalTest
             $member->PasswordEncryption,
             'sha1_v2.4'
         );
-        $result = $member->checkPassword('mynewpassword');
+        $authenticators = Security::singleton()->getApplicableAuthenticators(Authenticator::CHANGE_PASSWORD);
+        // With a valid user and password, check the password is correct
+        foreach ($authenticators as $authenticator) {
+            $result = $authenticator->checkPassword($member, 'mynewpassword');
+            if (!$result->isValid()) {
+                break;
+            }
+        }
         $this->assertTrue($result->isValid());
 
         Security::config()->password_encryption_algorithm = $origAlgo;
@@ -150,7 +158,14 @@ class MemberTest extends FunctionalTest
             $member->PasswordEncryption,
             'sha1_v2.4'
         );
-        $result = $member->checkPassword('');
+        $authenticators = Security::singleton()->getApplicableAuthenticators(Authenticator::CHANGE_PASSWORD);
+        // With a valid user and password, check the password is correct
+        foreach ($authenticators as $authenticator) {
+            $result = $authenticator->checkPassword($member, '');
+            if (!$result->isValid()) {
+                break;
+            }
+        }
         $this->assertTrue($result->isValid());
     }
 
@@ -159,7 +174,14 @@ class MemberTest extends FunctionalTest
         $member = $this->objFromFixture(Member::class, 'test');
         $member->Password = "test1";
         $member->write();
-        $result = $member->checkPassword('test1');
+        $authenticators = Security::singleton()->getApplicableAuthenticators(Authenticator::CHANGE_PASSWORD);
+        // With a valid user and password, check the password is correct
+        foreach ($authenticators as $authenticator) {
+            $result = $authenticator->checkPassword($member, 'test1');
+            if (!$result->isValid()) {
+                break;
+            }
+        }
         $this->assertTrue($result->isValid());
     }
 

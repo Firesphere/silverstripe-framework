@@ -732,7 +732,7 @@ class SecurityTest extends FunctionalTest
             }
         }
 
-        $this->assertContains($expected, $messages, $errorMessage);
+        $this->assertContains($expected, $messages[0], $errorMessage);
     }
 
     /**

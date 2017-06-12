@@ -9,6 +9,7 @@ use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Authenticator;
 use SilverStripe\Security\LoginAttempt;
 use SilverStripe\Security\Member;
+use SilverStripe\Security\PasswordEncryptor;
 use SilverStripe\Security\Security;
 
 /**
@@ -65,6 +66,7 @@ class MemberAuthenticator implements Authenticator
         $asDefaultAdmin = $email === Security::default_admin_username();
         if ($asDefaultAdmin) {
             // If logging is as default admin, ensure record is setup correctly
+            /** @var Member $member */
             $member = Member::default_admin();
             $success = Security::check_default_admin($email, $data['Password']);
             $result = $member->canLogIn();
@@ -90,7 +92,7 @@ class MemberAuthenticator implements Authenticator
 
         // Validate against member if possible
         if ($member && !$asDefaultAdmin) {
-            $result = $member->checkPassword($data['Password']);
+            $result = $this->checkPassword($member, $data['Password']);
         }
 
         // Emit failure to member and form (if available)
@@ -113,6 +115,38 @@ class MemberAuthenticator implements Authenticator
 
         return $member;
     }
+
+
+    /**
+     * Check if the passed password matches the stored one (if the member is not locked out).
+     *
+     * Note, we don't return early, to prevent differences in timings to give away if a member
+     * password is invalid.
+     *
+     * @param Member $member
+     * @param  string $password
+     * @return ValidationResult
+     */
+    public function checkPassword($member, $password)
+    {
+        $result = $member->canLogIn();
+
+        // Check a password is set on this member
+        if (empty($member->Password) && $member->exists()) {
+            $result->addError(_t(__CLASS__ . '.NoPassword', 'There is no password on this member.'));
+        }
+
+        $e = PasswordEncryptor::create_for_algorithm($member->PasswordEncryption);
+        if (!$e->check($member->Password, $password, $member->Salt, $member)) {
+            $result->addError(_t(
+                __CLASS__ . '.ERRORWRONGCRED',
+                'The provided details don\'t seem to be correct. Please try again.'
+            ));
+        }
+
+        return $result;
+    }
+
 
     /**
      * Log login attempt

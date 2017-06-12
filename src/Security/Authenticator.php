@@ -86,4 +86,13 @@ interface Authenticator
      * @return Member The matched member, or null if the authentication fails
      */
     public function authenticate($data, &$result = null);
+
+    /**
+     * Validate an entered password
+     *
+     * @param Member $member The member from the authenticate method
+     * @param string $password The password from the array of login credentials
+     * @return ValidationResult
+     */
+    public function checkPassword($member, $password);
 }

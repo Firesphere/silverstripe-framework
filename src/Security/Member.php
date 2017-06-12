@@ -308,36 +308,32 @@ class Member extends DataObject
     /**
      * Check if the passed password matches the stored one (if the member is not locked out).
      *
+     * @deprecated 5.0.0 Use Authenticator::checkPassword()
+     *
      * @param  string $password
      * @return ValidationResult
      */
     public function checkPassword($password)
     {
-        $result = $this->canLogIn();
+        Deprecation::notice(
+            '5.0.0',
+            'This method is deprecated and moved to Authenticator::checkPassword()'
+        );
 
-        // Short-circuit the result upon failure, no further checks needed.
-        if (!$result->isValid()) {
-            return $result;
-        }
+        $result = new ValidationResult();
 
-        // Allow default admin to login as self
-        if ($this->isDefaultAdmin() && Security::check_default_admin($this->Email, $password)) {
-            return $result;
-        }
-
-        // Check a password is set on this member
-        if (empty($this->Password) && $this->exists()) {
-            $result->addError(_t(__CLASS__ . '.NoPassword', 'There is no password on this member.'));
-
-            return $result;
-        }
-
-        $e = PasswordEncryptor::create_for_algorithm($this->PasswordEncryption);
-        if (!$e->check($this->Password, $password, $this->Salt, $this)) {
-            $result->addError(_t(
-                __CLASS__ . '.ERRORWRONGCRED',
-                'The provided details don\'t seem to be correct. Please try again.'
-            ));
+        $authenticators = Security::singleton()->getApplicableAuthenticators(Authenticator::LOGIN);
+        if (count($authenticators) === 0) {
+            $result->addError('No valid authenticator found');
+        } else {
+            foreach ($authenticators as $authenticator) {
+                // If any authenticator returns false as final auth, the result is considered bad
+                // @todo check if this is the wished behaviour
+                $result = $authenticator->checkPassword($this, $password);
+                if (!$result->isValid()) {
+                    break;
+                }
+            }
         }
 
         return $result;
@@ -590,7 +586,7 @@ class Member extends DataObject
     public function validateAutoLoginToken($autologinToken)
     {
         $hash = $this->encryptWithUserSettings($autologinToken);
-        $member = self::member_from_autologinhash($hash, false);
+        $member = static::member_from_autologinhash($hash, false);
 
         return (bool)$member;
     }
