@@ -110,7 +110,7 @@ use SilverStripe\Dev\SapphireTest;
 
 class PageTest extends SapphireTest
 {
-    public function setUp()
+    protected function setUp()
     {
         parent::setUp();
 
@@ -133,6 +133,12 @@ class PageTest extends SapphireTest
     public function testMySecondMethod()
     {
         // ..
+    }
+    
+    protected function tearDown()
+    {
+        // Remove the pages created in setUp
+        Page::get()->removeByFilter(['Title:PartialMatch' => 'Page ']);
     }
 }
 ```
